@@ -1185,8 +1185,11 @@ class Enumerated(Atomic):
         """Return True if arg is valid value for the class.  If the string
         value is wrong for the enumeration, the encoding will fail.
         """
-        return (isinstance(arg, int) and (arg >= 0)) or \
-            isinstance(arg, str)
+        if isinstance(arg, int) and arg >= 0:
+            return arg in cls.enumerations.values()
+        elif isinstance(arg, str):
+            return arg in cls.enumerations.keys()
+        return False
 
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.value)
