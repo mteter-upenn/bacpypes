@@ -36,11 +36,11 @@ requirements = [
 ]
 
 setup_requirements = [
-    'pytest-runner',
+    #'pytest-runner',
     ]
 
 test_requirements = [
-    'pytest',
+    #'pytest',
     'bacpypes',
 ]
 
