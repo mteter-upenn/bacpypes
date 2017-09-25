@@ -276,7 +276,7 @@ class Client:
 
     def request(self, *args, **kwargs):
         if _debug: Client._debug("request %r %r", args, kwargs)
-
+        if _debug: Client._debug("clientPeer %r", self.clientPeer)
         if not self.clientPeer:
             raise ConfigurationError("unbound client")
         self.clientPeer.indication(*args, **kwargs)
@@ -314,6 +314,7 @@ class Server:
 
     def response(self, *args, **kwargs):
         if _debug: Server._debug("response %r %r", args, kwargs)
+        if _debug: Server._debug("sent to peer %r", self.serverPeer)
 
         if not self.serverPeer:
             raise ConfigurationError("unbound server")

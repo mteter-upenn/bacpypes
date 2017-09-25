@@ -4,6 +4,7 @@
 BACnet Virtual Link Layer Service
 """
 
+import inspect
 import sys
 import struct
 from time import time as _time
@@ -438,6 +439,12 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             self.register(addr, ttl)
 
     def indication(self, pdu):
+        # cur_frame = inspect.currentframe()
+        # call_frame = inspect.getouterframes(cur_frame)
+        #
+        # for ii in range(len(call_frame)):
+        #     print('frame', ii, call_frame[ii][1:4])
+
         if _debug: BIPForeign._debug("indication %r", pdu)
 
         # check the BBMD registration status, we may not be registered
@@ -447,6 +454,8 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         # check for local stations
         if pdu.pduDestination.addrType == Address.localStationAddr:
+        # if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.13'):
+            print('LOCAL STATION ADDR')
             # make an original unicast PDU
             xpdu = OriginalUnicastNPDU(pdu, user_data=pdu.pduUserData)
             xpdu.pduDestination = pdu.pduDestination
@@ -456,6 +465,8 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         # check for broadcasts
         elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
+        # elif pdu.pduDestination.addrType == Address.localBroadcastAddr or pdu.pduDestination == Address('128.91.135.13'):
+            print("LOCAL BROADCAST ADDR")
             # make an original broadcast PDU
             xpdu = DistributeBroadcastToNetwork(pdu, user_data=pdu.pduUserData)
             xpdu.pduDestination = self.bbmdAddress
@@ -515,7 +526,10 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         elif isinstance(pdu, ForwardedNPDU):
             # build a PDU with the source from the real source
             xpdu = PDU(pdu.pduData, source=pdu.bvlciAddress, destination=LocalBroadcast(), user_data=pdu.pduUserData)
-
+            # try setting to broadcast as source so the return will be DistributeBroadcastToNetwork
+            # xpdu = PDU(pdu.pduData, source=LocalBroadcast(), destination=LocalBroadcast(), user_data=pdu.pduUserData)
+            # print('CHANGED TO LOCALBROADCAST IN BIPFOREIGN')
+            if _debug: BIPForeign._debug("    - xpdu: %r", xpdu)
             # send it upstream
             self.response(xpdu)
 
