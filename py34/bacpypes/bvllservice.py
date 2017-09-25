@@ -453,8 +453,8 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             return
 
         # check for local stations
-        if pdu.pduDestination.addrType == Address.localStationAddr:
-        # if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.13'):
+        # if pdu.pduDestination.addrType == Address.localStationAddr:
+        if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.13'):
             print('LOCAL STATION ADDR')
             # make an original unicast PDU
             xpdu = OriginalUnicastNPDU(pdu, user_data=pdu.pduUserData)
@@ -464,8 +464,8 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             self.request(xpdu)
 
         # check for broadcasts
-        elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
-        # elif pdu.pduDestination.addrType == Address.localBroadcastAddr or pdu.pduDestination == Address('128.91.135.13'):
+        # elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
+        elif pdu.pduDestination.addrType == Address.localBroadcastAddr or pdu.pduDestination == Address('128.91.135.13'):
             print("LOCAL BROADCAST ADDR")
             # make an original broadcast PDU
             xpdu = DistributeBroadcastToNetwork(pdu, user_data=pdu.pduUserData)
