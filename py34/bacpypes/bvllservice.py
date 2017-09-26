@@ -437,6 +437,29 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
                 raise RuntimeError("BBMD address and time-to-live must both be specified")
 
             self.register(addr, ttl)
+    def sap_request(self, *args, **kwargs):
+        if _debug: BIPForeign._debug("sap_request %r %r", args, kwargs)
+        BIPSAP.sap_request(self, *args, **kwargs)
+
+    def sap_indication(self, pdu):
+        if _debug: BIPForeign._debug("sap_indication %r", pdu)
+        BIPSAP.sap_indication(self, pdu)
+
+    def sap_response(self, *args, **kwargs):
+        if _debug: BIPForeign._debug("sap_response %r %r", args, kwargs)
+        BIPSAP.sap_response(self, *args, **kwargs)
+
+    def sap_confirmation(self, pdu):
+        if _debug: BIPForeign._debug("sap_confirmation %r", pdu)
+        BIPSAP.sap_confirmation(self, pdu)
+
+    def request(self, *args, **kwargs):
+        if _debug: BIPForeign._debug("request %r %r", args, kwargs)
+        Client.request(self, *args, **kwargs)
+
+    def response(self, *args, **kwargs):
+        if _debug: BIPForeign._debug("response %r %r", args, kwargs)
+        Server.response(self, *args, **kwargs)
 
     def indication(self, pdu):
         # cur_frame = inspect.currentframe()
@@ -537,6 +560,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             BIPForeign._warning("invalid pdu type: %s", type(pdu))
 
     def register(self, addr, ttl):
+        if _debug: BIPForeign._debug("register %s, %s", addr, ttl)
         """Initiate the process of registering with a BBMD."""
         # a little error checking
         if ttl <= 0:
@@ -553,6 +577,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         self.install_task(0)
 
     def unregister(self):
+        if _debug: BIPForeign._debug("unregister")
         """Drop the registration with a BBMD."""
         pdu = RegisterForeignDevice(0)
         pdu.pduDestination = self.bbmdAddress
@@ -568,6 +593,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         self.bbmdTimeToLive = None
 
     def process_task(self):
+        if _debug: BIPForeign._debug("process task")
         """Called when the registration request should be sent to the BBMD."""
         pdu = RegisterForeignDevice(self.bbmdTimeToLive)
         pdu.pduDestination = self.bbmdAddress
