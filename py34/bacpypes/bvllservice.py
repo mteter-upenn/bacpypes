@@ -462,11 +462,11 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         Server.response(self, *args, **kwargs)
 
     def indication(self, pdu, forwarded=False):
-        cur_frame = inspect.currentframe()
-        call_frame = inspect.getouterframes(cur_frame)
-
-        for ii in range(len(call_frame)):
-            print('frame', ii, call_frame[ii][1:4])
+        # cur_frame = inspect.currentframe()
+        # call_frame = inspect.getouterframes(cur_frame)
+        #
+        # for ii in range(len(call_frame)):
+        #     print('frame', ii, call_frame[ii][1:4])
 
         if _debug: BIPForeign._debug("indication %r", pdu)
 

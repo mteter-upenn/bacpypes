@@ -130,7 +130,7 @@ def run(spin=SPIN, sigterm=stop, sigusr1=print_stack):
         try:
             # if there is a task to process, do it
             if task:
-                # if _debug: run._debug("    - task: %r", task)
+                if _debug: run._debug("    - task: %r", task)
                 taskManager.process_task(task)
 
             # if delta is None, there are no tasks, default to spinning

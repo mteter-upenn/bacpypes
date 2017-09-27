@@ -492,7 +492,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
 
             for xadapter in self.adapters:
                 if (xadapter is not adapter):
-                    xadapter.process_npdu(newpdu)
+                    xadapter.process_npdu(newpdu, forwarded=forwarded)
             return
 
         if (npdu.npduDADR.addrType == Address.remoteBroadcastAddr) \
@@ -512,7 +512,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
                     newpdu.npduDADR = None
 
                     # send the packet downstream
-                    xadapter.process_npdu(newpdu)
+                    xadapter.process_npdu(newpdu, forwarded=forwarded)
                     return
 
             # see if we know how to get there
@@ -694,55 +694,55 @@ class NetworkServiceElement(ApplicationServiceElement):
                             if _debug: NetworkServiceElement._debug("    - sending on adapter: %r", xadapter)
                             self.request(xadapter, whoisrtn)
 
-    def IAmRouterToNetwork(self, adapter, npdu):
+    def IAmRouterToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("IAmRouterToNetwork %r %r", adapter, npdu)
 
         # pass along to the service access point
         self.elementService.add_router_references(adapter, npdu.pduSource, npdu.iartnNetworkList)
 
-    def ICouldBeRouterToNetwork(self, adapter, npdu):
+    def ICouldBeRouterToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("ICouldBeRouterToNetwork %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def RejectMessageToNetwork(self, adapter, npdu):
+    def RejectMessageToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("RejectMessageToNetwork %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def RouterBusyToNetwork(self, adapter, npdu):
+    def RouterBusyToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("RouterBusyToNetwork %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def RouterAvailableToNetwork(self, adapter, npdu):
+    def RouterAvailableToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("RouterAvailableToNetwork %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def InitializeRoutingTable(self, adapter, npdu):
+    def InitializeRoutingTable(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("InitializeRoutingTable %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def InitializeRoutingTableAck(self, adapter, npdu):
+    def InitializeRoutingTableAck(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("InitializeRoutingTableAck %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def EstablishConnectionToNetwork(self, adapter, npdu):
+    def EstablishConnectionToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("EstablishConnectionToNetwork %r %r", adapter, npdu)
 
         # reference the service access point
         # sap = self.elementService
 
-    def DisconnectConnectionToNetwork(self, adapter, npdu):
+    def DisconnectConnectionToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("DisconnectConnectionToNetwork %r %r", adapter, npdu)
 
         # reference the service access point

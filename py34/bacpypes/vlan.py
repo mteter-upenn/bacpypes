@@ -45,7 +45,7 @@ class Network:
         self.nodes.remove(node)
         node.lan = None
 
-    def process_pdu(self, pdu):
+    def process_pdu(self, pdu, forwarded=False):
         """ Process a PDU by sending a copy to each node as dictated by the
             addressing and if a node is promiscuous.
         """
@@ -62,12 +62,12 @@ class Network:
         elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
             for n in self.nodes:
                 if (pdu.pduSource != n.address):
-                    n.response(deepcopy(pdu))
+                    n.response(deepcopy(pdu), forwarded=forwarded)
 
         elif pdu.pduDestination.addrType == Address.localStationAddr:
             for n in self.nodes:
                 if n.promiscuous or (pdu.pduDestination == n.address):
-                    n.response(deepcopy(pdu))
+                    n.response(deepcopy(pdu), forwarded=forwarded)
 
         else:
             raise RuntimeError("invalid destination address type")
