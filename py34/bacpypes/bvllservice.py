@@ -461,12 +461,12 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         if _debug: BIPForeign._debug("response %r %r", args, kwargs)
         Server.response(self, *args, **kwargs)
 
-    def indication(self, pdu):
-        # cur_frame = inspect.currentframe()
-        # call_frame = inspect.getouterframes(cur_frame)
-        #
-        # for ii in range(len(call_frame)):
-        #     print('frame', ii, call_frame[ii][1:4])
+    def indication(self, pdu, forwarded=False):
+        cur_frame = inspect.currentframe()
+        call_frame = inspect.getouterframes(cur_frame)
+
+        for ii in range(len(call_frame)):
+            print('frame', ii, call_frame[ii][1:4])
 
         if _debug: BIPForeign._debug("indication %r", pdu)
 
@@ -490,6 +490,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         # elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
         elif pdu.pduDestination.addrType == Address.localBroadcastAddr or \
                         pdu.pduDestination == Address('128.91.135.255'):
+        # elif pdu.pduDestination.addrType == Address.localBroadcastAddr or forwarded:
             print("LOCAL BROADCAST ADDR")
             # make an original broadcast PDU
             xpdu = DistributeBroadcastToNetwork(pdu, user_data=pdu.pduUserData)
@@ -560,7 +561,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
             if _debug: BIPForeign._debug("    - xpdu: %r", xpdu)
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=True)
 
         else:
             BIPForeign._warning("invalid pdu type: %s", type(pdu))

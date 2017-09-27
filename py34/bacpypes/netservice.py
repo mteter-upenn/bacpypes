@@ -72,21 +72,21 @@ class NetworkAdapter(Client, DebugContents):
         # add this to the list of adapters for the network
         sap.adapters.append(self)
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         """Decode upstream PDUs and pass them up to the service access point."""
         if _debug: NetworkAdapter._debug("confirmation %r (net=%r)", pdu, self.adapterNet)
 
         npdu = NPDU(user_data=pdu.pduUserData)
         npdu.decode(pdu)
-        self.adapterSAP.process_npdu(self, npdu)
+        self.adapterSAP.process_npdu(self, npdu, forwarded=forwarded)
 
-    def process_npdu(self, npdu):
+    def process_npdu(self, npdu, forwarded=False):
         """Encode NPDUs from the service access point and send them downstream."""
         if _debug: NetworkAdapter._debug("process_npdu %r (net=%r)", npdu, self.adapterNet)
 
         pdu = PDU(user_data=npdu.pduUserData)
         npdu.encode(pdu)
-        self.request(pdu)
+        self.request(pdu, forwarded=forwarded)
 
     def EstablishConnectionToNetwork(self, net):
         pass
@@ -306,7 +306,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
         for xadapter in self.adapters:
             xadapter.process_npdu(npdu)
 
-    def process_npdu(self, adapter, npdu):
+    def process_npdu(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceAccessPoint._debug("process_npdu %r %r", adapter, npdu)
 
         # make sure our configuration is OK
@@ -442,7 +442,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
                     NetworkServiceAccessPoint._debug("    - apdu.pduDestination: %r", apdu.pduDestination)
 
                 # pass upstream to the application layer
-                self.response(apdu)
+                self.response(apdu, forwarded=forwarded)
 
             if not forwardMessage:
                 return
@@ -457,7 +457,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
                 xpdu.decode(_copy(npdu))
 
                 # pass to the service element
-                self.sap_request(adapter, xpdu)
+                self.sap_request(adapter, xpdu, forwarded=forwarded)
 
             if not forwardMessage:
                 return
@@ -559,7 +559,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
         # tell the adapter to process the NPDU
         adapter.process_npdu(xpdu)
 
-    def sap_confirmation(self, adapter, npdu):
+    def sap_confirmation(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceAccessPoint._debug("sap_confirmation %r %r", adapter, npdu)
 
         # encode it as a generic NPDU
@@ -568,7 +568,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
         npdu._xpdu = xpdu
 
         # tell the adapter to process the NPDU
-        adapter.process_npdu(xpdu)
+        adapter.process_npdu(xpdu, forwarded=forwarded)
 
 #
 #   NetworkServiceElement
@@ -581,13 +581,13 @@ class NetworkServiceElement(ApplicationServiceElement):
         if _debug: NetworkServiceElement._debug("__init__ eid=%r", eid)
         ApplicationServiceElement.__init__(self, eid)
 
-    def indication(self, adapter, npdu):
+    def indication(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("indication %r %r", adapter, npdu)
 
         # redirect
         fn = npdu.__class__.__name__
         if hasattr(self, fn):
-            getattr(self, fn)(adapter, npdu)
+            getattr(self, fn)(adapter, npdu, forwarded=forwarded)
 
     def confirmation(self, adapter, npdu):
         if _debug: NetworkServiceElement._debug("confirmation %r %r", adapter, npdu)
@@ -599,7 +599,7 @@ class NetworkServiceElement(ApplicationServiceElement):
 
     #-----
 
-    def WhoIsRouterToNetwork(self, adapter, npdu):
+    def WhoIsRouterToNetwork(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("WhoIsRouterToNetwork %r %r", adapter, npdu)
 
         # reference the service access point
@@ -638,7 +638,7 @@ class NetworkServiceElement(ApplicationServiceElement):
                 iamrtn.pduDestination = npdu.pduSource
 
                 # send it back
-                self.response(adapter, iamrtn)
+                self.response(adapter, iamrtn, forwarded=forwarded)
 
         else:
             # requesting a specific network
@@ -654,7 +654,7 @@ class NetworkServiceElement(ApplicationServiceElement):
                     iamrtn.pduDestination = npdu.pduSource
 
                     # send it back
-                    self.response(adapter, iamrtn)
+                    self.response(adapter, iamrtn, forwarded=forwarded)
 
                     break
             else:
@@ -672,7 +672,7 @@ class NetworkServiceElement(ApplicationServiceElement):
                         iamrtn.pduDestination = npdu.pduSource
 
                         # send it back
-                        self.response(adapter, iamrtn)
+                        self.response(adapter, iamrtn, forwarded=forwarded)
 
                 else:
                     if _debug: NetworkServiceElement._debug("    - forwarding request to other adapters")
