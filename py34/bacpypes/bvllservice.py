@@ -557,7 +557,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
                            user_data=pdu.pduUserData)
             # try setting to broadcast as source so the return will be DistributeBroadcastToNetwork
             # xpdu = PDU(pdu.pduData, source=LocalBroadcast(), destination=LocalBroadcast(), user_data=pdu.pduUserData)
-            # print('CHANGED TO LOCALBROADCAST IN BIPFOREIGN')
+
             if _debug: BIPForeign._debug("    - xpdu: %r", xpdu)
             # send it upstream
             self.response(xpdu)
