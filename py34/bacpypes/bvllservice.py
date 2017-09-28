@@ -477,7 +477,8 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         # check for local stations
         # if pdu.pduDestination.addrType == Address.localStationAddr:
-        if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.255'):
+        # if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.255'):
+        if pdu.pduDestination.addrType == Address.localStationAddr and not forwarded:
             print('LOCAL STATION ADDR')
             # make an original unicast PDU
             xpdu = OriginalUnicastNPDU(pdu, user_data=pdu.pduUserData)
@@ -488,9 +489,9 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         # check for broadcasts
         # elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
-        elif pdu.pduDestination.addrType == Address.localBroadcastAddr or \
-                        pdu.pduDestination == Address('128.91.135.255'):
-        # elif pdu.pduDestination.addrType == Address.localBroadcastAddr or forwarded:
+        # elif pdu.pduDestination.addrType == Address.localBroadcastAddr or \
+        #                 pdu.pduDestination == Address('128.91.135.255'):
+        elif pdu.pduDestination.addrType == Address.localBroadcastAddr or forwarded:
             print("LOCAL BROADCAST ADDR")
             # make an original broadcast PDU
             xpdu = DistributeBroadcastToNetwork(pdu, user_data=pdu.pduUserData)
@@ -550,12 +551,12 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         elif isinstance(pdu, ForwardedNPDU):
             # build a PDU with the source from the real source
-            if pdu.bvlciAddress == Address('128.91.135.13'):
-                xpdu = PDU(pdu.pduData, source=Address('128.91.135.255'), destination=LocalBroadcast(),
-                           user_data=pdu.pduUserData)
-            else:
-                xpdu = PDU(pdu.pduData, source=pdu.bvlciAddress, destination=LocalBroadcast(),
-                           user_data=pdu.pduUserData)
+            # if pdu.bvlciAddress == Address('128.91.135.13'):
+            #     xpdu = PDU(pdu.pduData, source=Address('128.91.135.255'), destination=LocalBroadcast(),
+            #                user_data=pdu.pduUserData)
+            # else:
+            xpdu = PDU(pdu.pduData, source=pdu.bvlciAddress, destination=LocalBroadcast(),
+                       user_data=pdu.pduUserData)
             # try setting to broadcast as source so the return will be DistributeBroadcastToNetwork
             # xpdu = PDU(pdu.pduData, source=LocalBroadcast(), destination=LocalBroadcast(), user_data=pdu.pduUserData)
 
