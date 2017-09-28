@@ -275,7 +275,7 @@ class Client:
                 bind(self, server)
 
     def request(self, *args, **kwargs):
-        if _debug: Client._debug("Client child is %s, clientPeer is %r", self.__class__, self.clientPeer)
+        if _debug: Client._debug("Client child is %s, clientPeer is %s", self.__class__, self.clientPeer)
         if _debug: Client._debug("request %r %r", args, kwargs)
 
         if not self.clientPeer:
@@ -314,7 +314,7 @@ class Server:
         raise NotImplementedError("indication must be overridden")
 
     def response(self, *args, **kwargs):
-        if _debug: Server._debug("Server child is %s, serverPeer is %r", self.__class__, self.serverPeer)
+        if _debug: Server._debug("Server child is %s, serverPeer is %s", self.__class__, self.serverPeer)
         if _debug: Server._debug("response %r %r", args, kwargs)
 
         if not self.serverPeer:
@@ -419,7 +419,7 @@ class ServiceAccessPoint:
                 bind(element, self)
 
     def sap_request(self, *args, **kwargs):
-        if _debug: ServiceAccessPoint._debug("ServiceAccessPoint child is %s, serviceElement is %r", self.__class__,
+        if _debug: ServiceAccessPoint._debug("ServiceAccessPoint child is %s, serviceElement is %s", self.__class__,
                                              self.serviceElement)
         if _debug: ServiceAccessPoint._debug("sap_request(%s) %r %r", self.serviceID, args, kwargs)
 
