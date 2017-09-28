@@ -1115,7 +1115,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
 
         return invokeID
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         """Packets coming up the stack are APDU's."""
         if _debug: StateMachineAccessPoint._debug("confirmation %r", pdu)
 
@@ -1146,11 +1146,11 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                 self.serverTransactions.append(tr)
 
             # let it run with the apdu
-            tr.indication(apdu)
+            tr.indication(apdu, forwarded=forwarded)
 
         elif isinstance(apdu, UnconfirmedRequestPDU):
             # deliver directly to the application
-            self.sap_request(apdu)
+            self.sap_request(apdu, forwarded=forwarded)
 
         elif isinstance(apdu, SimpleAckPDU) \
             or isinstance(apdu, ComplexAckPDU) \
@@ -1165,7 +1165,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                 return
 
             # send the packet on to the transaction
-            tr.confirmation(apdu)
+            tr.confirmation(apdu, forwarded=forwarded)
 
         elif isinstance(apdu, AbortPDU):
             # find the transaction being aborted
@@ -1177,7 +1177,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                     return
 
                 # send the packet on to the transaction
-                tr.confirmation(apdu)
+                tr.confirmation(apdu, forwarded=forwarded)
             else:
                 for tr in self.serverTransactions:
                     if (apdu.apduInvokeID == tr.invokeID) and (apdu.pduSource == tr.remoteDevice.address):
@@ -1186,7 +1186,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                     return
 
                 # send the packet on to the transaction
-                tr.indication(apdu)
+                tr.indication(apdu, forwarded=forwarded)
 
         elif isinstance(apdu, SegmentAckPDU):
             # find the transaction being aborted
@@ -1198,7 +1198,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                     return
 
                 # send the packet on to the transaction
-                tr.confirmation(apdu)
+                tr.confirmation(apdu, forwarded=forwarded)
             else:
                 for tr in self.serverTransactions:
                     if (apdu.apduInvokeID == tr.invokeID) and (apdu.pduSource == tr.remoteDevice.address):
@@ -1207,7 +1207,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                     return
 
                 # send the packet on to the transaction
-                tr.indication(apdu)
+                tr.indication(apdu, forwarded=forwarded)
 
         else:
             raise RuntimeError("invalid APDU (8)")
@@ -1287,7 +1287,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
         ApplicationServiceElement.__init__(self, aseID)
         ServiceAccessPoint.__init__(self, sapID)
 
-    def indication(self, apdu):
+    def indication(self, apdu, forwarded=False):
         if _debug: ApplicationServiceAccessPoint._debug("indication %r", apdu)
 
         if isinstance(apdu, ConfirmedRequestPDU):
@@ -1315,7 +1315,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
 
                 try:
                     # forward the decoded packet
-                    self.sap_request(xpdu)
+                    self.sap_request(xpdu, forwarded=forwarded)
                 except RejectException as err:
                     ApplicationServiceAccessPoint._debug("    - execution reject: %r", err)
                     error_found = err
@@ -1332,7 +1332,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
                 if _debug: ApplicationServiceAccessPoint._debug("    - reject_pdu: %r", reject_pdu)
 
                 # send it to the client
-                self.response(reject_pdu)
+                self.response(reject_pdu, forwarded=forwarded)
 
             elif isinstance(error_found, AbortException):
                 if _debug: ApplicationServiceAccessPoint._debug("    - abort exception: %r", error_found)
@@ -1342,7 +1342,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
                 if _debug: ApplicationServiceAccessPoint._debug("    - abort_pdu: %r", abort_pdu)
 
                 # send it to the client
-                self.response(abort_pdu)
+                self.response(abort_pdu, forwarded=forwarded)
 
         elif isinstance(apdu, UnconfirmedRequestPDU):
             atype = unconfirmed_request_types.get(apdu.apduService)
@@ -1362,7 +1362,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
 
             try:
                 # forward the decoded packet
-                self.sap_request(xpdu)
+                self.sap_request(xpdu, forwarded=forwarded)
             except RejectException as err:
                 ApplicationServiceAccessPoint._debug("    - execution reject: %r", err)
             except AbortException as err:

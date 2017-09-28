@@ -158,7 +158,7 @@ def run(spin=SPIN, sigterm=stop, sigusr1=print_stack):
 
                 # call the functions
                 for fn, args, kwargs in fnlist:
-#                   if _debug: run._debug("    - call: %r %r %r", fn, args, kwargs)
+                    if _debug: run._debug("    - call: %r %r %r", fn, args, kwargs)
                     fn( *args, **kwargs)
 
                 # done with this list

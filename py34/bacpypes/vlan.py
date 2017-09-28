@@ -111,7 +111,7 @@ class Node(Server):
 
         lan.add_node(self)
 
-    def indication(self, pdu):
+    def indication(self, pdu, forwarded=False):
         """Send a message."""
         if _debug: Node._debug("indication %r", pdu)
 
@@ -127,4 +127,4 @@ class Node(Server):
             raise RuntimeError("spoofing address conflict")
 
         # actual network delivery is deferred
-        deferred(self.lan.process_pdu, pdu)
+        deferred(self.lan.process_pdu, pdu, forwarded=forwarded)

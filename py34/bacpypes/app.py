@@ -334,7 +334,7 @@ class Application(ApplicationServiceElement, Collector):
         # continue
         super(Application, self).request(apdu)
 
-    def indication(self, apdu):
+    def indication(self, apdu, forwarded=False):
         if _debug: Application._debug("indication %r", apdu)
 
         # get a helper function
@@ -363,7 +363,7 @@ class Application(ApplicationServiceElement, Collector):
             # send back an error
             if isinstance(apdu, ConfirmedRequestPDU):
                 resp = Error(errorClass=err.errorClass, errorCode=err.errorCode, context=apdu)
-                self.response(resp)
+                self.response(resp, forwarded=forwarded)
 
         except Exception as err:
             Application._exception("exception: %r", err)
@@ -371,7 +371,7 @@ class Application(ApplicationServiceElement, Collector):
             # send back an error
             if isinstance(apdu, ConfirmedRequestPDU):
                 resp = Error(errorClass='device', errorCode='operationalProblem', context=apdu)
-                self.response(resp)
+                self.response(resp, forwarded=forwarded)
 
 #
 #   ApplicationIOController
