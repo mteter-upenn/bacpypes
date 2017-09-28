@@ -279,6 +279,7 @@ class Client:
         if _debug: Client._debug("clientPeer %r", self.clientPeer)
         if not self.clientPeer:
             raise ConfigurationError("unbound client")
+        print('CLIENT request from', self.__class__, 'clientPeer:', self.clientPeer)
         self.clientPeer.indication(*args, **kwargs)
 
     def confirmation(self, *args, **kwargs):
@@ -318,6 +319,7 @@ class Server:
 
         if not self.serverPeer:
             raise ConfigurationError("unbound server")
+        print('SERVER response from', self.__class__, 'serverPeer:', self.serverPeer)
         self.serverPeer.confirmation(*args, **kwargs)
 
 #
@@ -422,6 +424,7 @@ class ServiceAccessPoint:
 
         if not self.serviceElement:
             raise ConfigurationError("unbound service access point")
+        print('SAP sap_request from', self.__class__, 'serviceElement:', self.serviceElement)
         self.serviceElement.indication(*args, **kwargs)
 
     def sap_indication(self, *args, **kwargs):
