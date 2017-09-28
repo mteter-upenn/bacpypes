@@ -219,7 +219,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
 
     #-----
 
-    def indication(self, pdu):
+    def indication(self, pdu, forwarded=False):
         if _debug: NetworkServiceAccessPoint._debug("indication %r", pdu)
 
         # make sure our configuration is OK
@@ -248,12 +248,12 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
 
         # local stations given to local adapter
         if (npdu.pduDestination.addrType == Address.localStationAddr):
-            adapter.process_npdu(npdu)
+            adapter.process_npdu(npdu, forwarded=forwarded)
             return
 
         # local broadcast given to local adapter
         if (npdu.pduDestination.addrType == Address.localBroadcastAddr):
-            adapter.process_npdu(npdu)
+            adapter.process_npdu(npdu, forwarded=forwarded)
             return
 
         # global broadcast
@@ -264,7 +264,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
 
             # send it to all of connected adapters
             for xadapter in self.adapters:
-                xadapter.process_npdu(npdu)
+                xadapter.process_npdu(npdu, forwarded=forwarded)
             return
 
         # remote broadcast
@@ -293,7 +293,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
             npdu.npduDADR = apdu.pduDestination
 
             # send it along
-            adapter.process_npdu(npdu)
+            adapter.process_npdu(npdu, forwarded=forwarded)
             return
 
         if _debug: NetworkServiceAccessPoint._debug("    - no known path to network, broadcast to discover it")
@@ -304,7 +304,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
 
         # send it to all of the connected adapters
         for xadapter in self.adapters:
-            xadapter.process_npdu(npdu)
+            xadapter.process_npdu(npdu, forwarded=forwarded)
 
     def process_npdu(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceAccessPoint._debug("process_npdu %r %r", adapter, npdu)
