@@ -1212,14 +1212,14 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
         else:
             raise RuntimeError("invalid APDU (8)")
 
-    def sap_indication(self, apdu):
+    def sap_indication(self, apdu, forwarded=False):
         """This function is called when the application is requesting
         a new transaction as a client."""
         if _debug: StateMachineAccessPoint._debug("sap_indication %r", apdu)
 
         if isinstance(apdu, UnconfirmedRequestPDU):
             # deliver to the device
-            self.request(apdu)
+            self.request(apdu, forwarded=forwarded)
 
         elif isinstance(apdu, ConfirmedRequestPDU):
             # make sure it has an invoke ID
@@ -1247,7 +1247,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
             self.clientTransactions.append(tr)
 
             # let it run
-            tr.indication(apdu)
+            tr.indication(apdu, forwarded=forwarded)
 
         else:
             raise RuntimeError("invalid APDU (9)")
@@ -1371,7 +1371,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
         else:
             if _debug: ApplicationServiceAccessPoint._debug("    - unknown PDU type?!")
 
-    def sap_indication(self, apdu):
+    def sap_indication(self, apdu, forwarded=False):
         if _debug: ApplicationServiceAccessPoint._debug("sap_indication %r", apdu)
 
         if isinstance(apdu, ConfirmedRequestPDU):
@@ -1399,7 +1399,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
         if _debug: ApplicationServiceAccessPoint._debug("    - xpdu %r", xpdu)
 
         # forward the encoded packet
-        self.request(xpdu)
+        self.request(xpdu, forwarded=forwarded)
 
         # if the upper layers of the application did not assign an invoke ID,
         # copy the one that was assigned on its way down the stack

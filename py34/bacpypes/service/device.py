@@ -176,7 +176,7 @@ class WhoIsIAmServices(Capability):
         # away it goes
         self.request(whoIs)
 
-    def do_WhoIsRequest(self, apdu):
+    def do_WhoIsRequest(self, apdu, forwarded=False):
         """Respond to a Who-Is request."""
         if _debug: WhoIsIAmServices._debug("do_WhoIsRequest %r", apdu)
 
@@ -210,9 +210,9 @@ class WhoIsIAmServices(Capability):
                 return
 
         # generate an I-Am
-        self.i_am(address=apdu.pduSource)
+        self.i_am(address=apdu.pduSource, forwarded=forwarded)
 
-    def i_am(self, address=None):
+    def i_am(self, address=None, forwarded=False):
         if _debug: WhoIsIAmServices._debug("i_am")
 
         # this requires a local device
@@ -235,7 +235,7 @@ class WhoIsIAmServices(Capability):
         if _debug: WhoIsIAmServices._debug("    - iAm: %r", iAm)
 
         # away it goes
-        self.request(iAm)
+        self.request(iAm, forwarded=forwarded)
 
     def do_IAmRequest(self, apdu):
         """Respond to an I-Am request."""

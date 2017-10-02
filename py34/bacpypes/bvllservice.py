@@ -339,7 +339,7 @@ class BIPSimple(BIPSAP, Client, Server):
         Client.__init__(self, cid)
         Server.__init__(self, sid)
 
-    def indication(self, pdu):
+    def indication(self, pdu, forwarded=False):
         if _debug: BIPSimple._debug("indication %r", pdu)
 
         # check for local stations
@@ -401,7 +401,7 @@ class BIPSimple(BIPSAP, Client, Server):
             if _debug: BIPSimple._debug("    - xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=True)
 
         else:
             BIPSimple._warning("invalid pdu type: %s", type(pdu))
@@ -479,7 +479,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         # if pdu.pduDestination.addrType == Address.localStationAddr:
         # if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.255'):
         if pdu.pduDestination.addrType == Address.localStationAddr and not forwarded:
-            print('LOCAL STATION ADDR')
+            print('LOCAL STATION ADDR', pdu.pduDestination)
             # make an original unicast PDU
             xpdu = OriginalUnicastNPDU(pdu, user_data=pdu.pduUserData)
             xpdu.pduDestination = pdu.pduDestination
@@ -543,6 +543,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             self.sap_response(pdu)
 
         elif isinstance(pdu, OriginalUnicastNPDU):
+            print('confirmation originalunicastnpdu')
             # build a vanilla PDU
             xpdu = PDU(pdu.pduData, source=pdu.pduSource, destination=pdu.pduDestination, user_data=pdu.pduUserData)
 

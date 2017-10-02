@@ -324,7 +324,7 @@ class Application(ApplicationServiceElement, Collector):
 
     #-----
 
-    def request(self, apdu):
+    def request(self, apdu, forwarded=False):
         if _debug: Application._debug("request %r", apdu)
 
         # double check the input is the right kind of APDU
@@ -332,10 +332,10 @@ class Application(ApplicationServiceElement, Collector):
             raise TypeError("APDU expected")
 
         # continue
-        super(Application, self).request(apdu)
+        super(Application, self).request(apdu, forwarded=forwarded)
 
     def indication(self, apdu, forwarded=False):
-        if _debug: Application._debug("indication %r", apdu)
+        if _debug: Application._debug("indication %r %r", apdu, forwarded)
 
         # get a helper function
         helperName = "do_" + apdu.__class__.__name__
@@ -350,7 +350,7 @@ class Application(ApplicationServiceElement, Collector):
 
         # pass the apdu on to the helper function
         try:
-            helperFn(apdu)
+            helperFn(apdu, forwarded=forwarded)
         except RejectException as err:
             if _debug: Application._debug("    - reject exception: %r", err)
             raise

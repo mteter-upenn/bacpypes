@@ -4,6 +4,7 @@
 Core
 """
 
+# import inspect
 import sys
 import asyncore
 import signal
@@ -225,6 +226,11 @@ def run_once():
 
 @bacpypes_debugging
 def deferred(fn, *args, **kwargs):
+    # cur_frame = inspect.currentframe()
+    # call_frame = inspect.getouterframes(cur_frame)
+    #
+    # for ii in range(len(call_frame)):
+    #     print('frame', ii, call_frame[ii][1:4])
     if _debug: deferred._debug("deferred %r %r %r", fn, args, kwargs)
     global deferredFns, taskManager
 
