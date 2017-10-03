@@ -1407,7 +1407,7 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
             if _debug: ApplicationServiceAccessPoint._debug("    - pass invoke ID upstream %r", xpdu.apduInvokeID)
             apdu.apduInvokeID = xpdu.apduInvokeID
 
-    def confirmation(self, apdu):
+    def confirmation(self, apdu, forwarded=False):
         if _debug: ApplicationServiceAccessPoint._debug("confirmation %r", apdu)
 
         if isinstance(apdu, SimpleAckPDU):
@@ -1452,9 +1452,9 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
         if _debug: ApplicationServiceAccessPoint._debug("    - xpdu %r", xpdu)
 
         # forward the decoded packet
-        self.sap_response(xpdu)
+        self.sap_response(xpdu, forwarded=forwarded)
 
-    def sap_confirmation(self, apdu):
+    def sap_confirmation(self, apdu, forwarded=False):
         if _debug: ApplicationServiceAccessPoint._debug("sap_confirmation %r", apdu)
 
         if isinstance(apdu, SimpleAckPDU):
@@ -1481,4 +1481,4 @@ class ApplicationServiceAccessPoint(ApplicationServiceElement, ServiceAccessPoin
         if _debug: ApplicationServiceAccessPoint._debug("    - xpdu %r", xpdu)
 
         # forward the encoded packet
-        self.response(xpdu)
+        self.response(xpdu, forwarded=forwarded)
