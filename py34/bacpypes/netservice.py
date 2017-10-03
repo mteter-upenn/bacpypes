@@ -548,7 +548,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
         ### log this, what to do?
         return
 
-    def sap_indication(self, adapter, npdu):
+    def sap_indication(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceAccessPoint._debug("sap_indication %r %r", adapter, npdu)
 
         # encode it as a generic NPDU
@@ -557,7 +557,7 @@ class NetworkServiceAccessPoint(ServiceAccessPoint, Server, DebugContents):
         npdu._xpdu = xpdu
 
         # tell the adapter to process the NPDU
-        adapter.process_npdu(xpdu)
+        adapter.process_npdu(xpdu, forwarded=forwarded)
 
     def sap_confirmation(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceAccessPoint._debug("sap_confirmation %r %r", adapter, npdu)

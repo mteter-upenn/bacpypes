@@ -313,17 +313,17 @@ class BIPSAP(ServiceAccessPoint):
         if _debug: BIPSAP._debug("__init__ sap=%r", sap)
         ServiceAccessPoint.__init__(self, sap)
 
-    def sap_indication(self, pdu):
+    def sap_indication(self, pdu, forwarded=False):
         if _debug: BIPSAP._debug("sap_indication %r", pdu)
 
         # this is a request initiated by the ASE, send this downstream
-        self.request(pdu)
+        self.request(pdu, forwarded=forwarded)
 
-    def sap_confirmation(self, pdu):
+    def sap_confirmation(self, pdu, forwarded=False):
         if _debug: BIPSAP._debug("sap_confirmation %r", pdu)
 
         # this is a response from the ASE, send this downstream
-        self.request(pdu)
+        self.request(pdu, forwarded=forwarded)
 
 #
 #   BIPSimple
@@ -441,17 +441,17 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         if _debug: BIPForeign._debug("sap_request %r %r", args, kwargs)
         BIPSAP.sap_request(self, *args, **kwargs)
 
-    def sap_indication(self, pdu):
+    def sap_indication(self, pdu, forwarded=False):
         if _debug: BIPForeign._debug("sap_indication %r", pdu)
-        BIPSAP.sap_indication(self, pdu)
+        BIPSAP.sap_indication(self, pdu, forwarded=forwarded)
 
     def sap_response(self, *args, **kwargs):
         if _debug: BIPForeign._debug("sap_response %r %r", args, kwargs)
         BIPSAP.sap_response(self, *args, **kwargs)
 
-    def sap_confirmation(self, pdu):
+    def sap_confirmation(self, pdu, forwarded=False):
         if _debug: BIPForeign._debug("sap_confirmation %r", pdu)
-        BIPSAP.sap_confirmation(self, pdu)
+        BIPSAP.sap_confirmation(self, pdu, forwarded=forwarded)
 
     def request(self, *args, **kwargs):
         if _debug: BIPForeign._debug("request %r %r", args, kwargs)
