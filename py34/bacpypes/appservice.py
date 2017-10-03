@@ -1252,7 +1252,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
         else:
             raise RuntimeError("invalid APDU (9)")
 
-    def sap_confirmation(self, apdu):
+    def sap_confirmation(self, apdu, forwarded=False):
         """This function is called when the application is responding
         to a request, the apdu may be a simple ack, complex ack, error, reject or abort."""
         if _debug: StateMachineAccessPoint._debug("sap_confirmation %r", apdu)
@@ -1270,7 +1270,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
                 return
 
             # pass control to the transaction
-            tr.confirmation(apdu)
+            tr.confirmation(apdu, forwarded=forwarded)
 
         else:
             raise RuntimeError("invalid APDU (10)")

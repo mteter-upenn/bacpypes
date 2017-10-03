@@ -467,6 +467,8 @@ class ApplicationServiceElement:
                 bind(self, service)
 
     def request(self, *args, **kwargs):
+        if _debug: ApplicationServiceElement._debug("ApplicationServiceElement child is %s, elementService is %s",
+                                                    self.__class__, self.elementService)
         if _debug: ApplicationServiceElement._debug("request(%s) %r %r", self.elementID, args, kwargs)
 
         if not self.elementService:
@@ -478,6 +480,8 @@ class ApplicationServiceElement:
         raise NotImplementedError("indication must be overridden")
 
     def response(self, *args, **kwargs):
+        if _debug: ApplicationServiceElement._debug("ApplicationServiceElement child is %s, elementService is %s",
+                                                    self.__class__, self.elementService)
         if _debug: ApplicationServiceElement._debug("response(%s) %r %r", self.elementID, args, kwargs)
 
         if not self.elementService:
