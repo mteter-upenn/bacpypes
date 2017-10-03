@@ -98,7 +98,7 @@ class FileServices(Capability):
         if _debug: FileServices._debug("__init__")
         Capability.__init__(self)
 
-    def do_AtomicReadFileRequest(self, apdu):
+    def do_AtomicReadFileRequest(self, apdu, forwarded=False):
         """Return one of our records."""
         if _debug: FileServices._debug("do_AtomicReadFileRequest %r", apdu)
 
@@ -190,9 +190,9 @@ class FileServices(Capability):
         if _debug: FileServices._debug("    - resp: %r", resp)
 
         # return the result
-        self.response(resp)
+        self.response(resp, forwarded=forwarded)
 
-    def do_AtomicWriteFileRequest(self, apdu):
+    def do_AtomicWriteFileRequest(self, apdu, forwarded=False):
         """Return one of our records."""
         if _debug: FileServices._debug("do_AtomicWriteFileRequest %r", apdu)
 
@@ -272,7 +272,7 @@ class FileServices(Capability):
         if _debug: FileServices._debug("    - resp: %r", resp)
 
         # return the result
-        self.response(resp)
+        self.response(resp, forwarded=forwarded)
 
 #
 #   FileServicesClient

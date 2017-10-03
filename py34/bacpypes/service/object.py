@@ -28,7 +28,7 @@ class ReadWritePropertyServices(Capability):
         if _debug: ReadWritePropertyServices._debug("__init__")
         Capability.__init__(self)
 
-    def do_ReadPropertyRequest(self, apdu):
+    def do_ReadPropertyRequest(self, apdu, forwarded=False):
         """Return the value of some property of one of our objects."""
         if _debug: ReadWritePropertyServices._debug("do_ReadPropertyRequest %r", apdu)
 
@@ -89,9 +89,9 @@ class ReadWritePropertyServices(Capability):
             raise ExecutionError(errorClass='property', errorCode='unknownProperty')
 
         # return the result
-        self.response(resp)
+        self.response(resp, forwarded=forwarded)
 
-    def do_WritePropertyRequest(self, apdu):
+    def do_WritePropertyRequest(self, apdu, forwarded=False):
         """Change the value of some property of one of our objects."""
         if _debug: ReadWritePropertyServices._debug("do_WritePropertyRequest %r", apdu)
 
@@ -134,7 +134,7 @@ class ReadWritePropertyServices(Capability):
             raise ExecutionError(errorClass='property', errorCode='unknownProperty')
 
         # return the result
-        self.response(resp)
+        self.response(resp, forwarded=forwarded)
 
 #
 #   read_property_to_any
@@ -227,7 +227,7 @@ class ReadWritePropertyMultipleServices(Capability):
         if _debug: ReadWritePropertyMultipleServices._debug("__init__")
         Capability.__init__(self)
 
-    def do_ReadPropertyMultipleRequest(self, apdu):
+    def do_ReadPropertyMultipleRequest(self, apdu, forwarded=False):
         """Respond to a ReadPropertyMultiple Request."""
         if _debug: ReadWritePropertyMultipleServices._debug("do_ReadPropertyMultipleRequest %r", apdu)
 
@@ -318,7 +318,7 @@ class ReadWritePropertyMultipleServices(Capability):
             if _debug: ReadWritePropertyMultipleServices._debug("    - resp: %r", resp)
 
         # return the result
-        self.response(resp)
+        self.response(resp, forwarded=forwarded)
 
 #   def do_WritePropertyMultipleRequest(self, apdu):
 #       """Respond to a WritePropertyMultiple Request."""

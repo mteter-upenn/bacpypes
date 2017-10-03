@@ -136,7 +136,7 @@ class WhoIsIAmServices(Capability):
         if _debug: WhoIsIAmServices._debug("__init__")
         Capability.__init__(self)
 
-    def who_is(self, low_limit=None, high_limit=None, address=None):
+    def who_is(self, low_limit=None, high_limit=None, address=None, forwarded=False):
         if _debug: WhoIsIAmServices._debug("who_is")
 
         # build a request
@@ -174,7 +174,7 @@ class WhoIsIAmServices(Capability):
         ### appropriate I-Am comes in
 
         # away it goes
-        self.request(whoIs)
+        self.request(whoIs, forwarded=forwarded)
 
     def do_WhoIsRequest(self, apdu, forwarded=False):
         """Respond to a Who-Is request."""
@@ -237,7 +237,7 @@ class WhoIsIAmServices(Capability):
         # away it goes
         self.request(iAm, forwarded=forwarded)
 
-    def do_IAmRequest(self, apdu):
+    def do_IAmRequest(self, apdu, forwarded=False):
         """Respond to an I-Am request."""
         if _debug: WhoIsIAmServices._debug("do_IAmRequest %r", apdu)
 
@@ -273,12 +273,12 @@ class WhoHasIHaveServices(Capability):
         if _debug: WhoHasIHaveServices._debug("__init__")
         Capability.__init__(self)
 
-    def who_has(self, thing, address=None):
+    def who_has(self, thing, address=None, forwarded=False):
         if _debug: WhoHasIHaveServices._debug("who_has %r address=%r", thing, address)
 
         raise NotImplementedError("who_has")
 
-    def do_WhoHasRequest(self, apdu):
+    def do_WhoHasRequest(self, apdu, forwarded=False):
         """Respond to a Who-Has request."""
         if _debug: WhoHasIHaveServices._debug("do_WhoHasRequest, %r", apdu)
 
@@ -298,9 +298,9 @@ class WhoHasIHaveServices(Capability):
             raise ExecutionError(errorClass='object', errorCode='unknownObject')
 
         # send out the response
-        self.i_have(obj, address=apdu.pduSource)
+        self.i_have(obj, address=apdu.pduSource, forwarded=forwarded)
 
-    def i_have(self, thing, address=None):
+    def i_have(self, thing, address=None, forwarded=False):
         if _debug: WhoHasIHaveServices._debug("i_have %r address=%r", thing, address)
 
         # ignore this if there's no local device
@@ -322,9 +322,9 @@ class WhoHasIHaveServices(Capability):
         if _debug: WhoHasIHaveServices._debug("    - iHave: %r", iHave)
 
         # send it along
-        self.request(iHave)
+        self.request(iHave, forwarded=forwarded)
 
-    def do_IHaveRequest(self, apdu):
+    def do_IHaveRequest(self, apdu, forwarded=False):
         """Respond to a I-Have request."""
         if _debug: WhoHasIHaveServices._debug("do_IHaveRequest %r", apdu)
 

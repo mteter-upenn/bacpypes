@@ -570,7 +570,7 @@ class ChangeOfValueServices(Capability):
 
         ### delete the rest of the pending requests for this client
 
-    def do_SubscribeCOVRequest(self, apdu):
+    def do_SubscribeCOVRequest(self, apdu, forwarded=False):
         if _debug: ChangeOfValueServices._debug("do_SubscribeCOVRequest %r", apdu)
 
         # extract the pieces
@@ -635,4 +635,4 @@ class ChangeOfValueServices(Capability):
         response = SimpleAckPDU(context=apdu)
 
         # return the result
-        self.response(response)
+        self.response(response, forwarded=forwarded)
