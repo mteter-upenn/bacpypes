@@ -39,8 +39,8 @@ class _MultiplexClient(Client):
         Client.__init__(self)
         self.multiplexer = mux
 
-    def confirmation(self, pdu, forwarded=False):
-        self.multiplexer.confirmation(self, pdu, forwarded=forwarded)
+    def confirmation(self, pdu):
+        self.multiplexer.confirmation(self, pdu)
 
 class _MultiplexServer(Server):
 
@@ -48,8 +48,8 @@ class _MultiplexServer(Server):
         Server.__init__(self)
         self.multiplexer = mux
 
-    def indication(self, pdu, forwarded=False):
-        self.multiplexer.indication(self, pdu, forwarded=forwarded)
+    def indication(self, pdu):
+        self.multiplexer.indication(self, pdu)
 
 #
 #   UDPMultiplexer
@@ -117,7 +117,7 @@ class UDPMultiplexer:
         if self.broadcastPort:
             self.broadcastPort.close_socket()
 
-    def indication(self, server, pdu, forwarded=False):
+    def indication(self, server, pdu):
         if _debug: UDPMultiplexer._debug("indication %r %r", server, pdu)
 
         # check for a broadcast message
@@ -136,9 +136,9 @@ class UDPMultiplexer:
         else:
             raise RuntimeError("invalid destination address type")
 
-        self.directPort.indication(PDU(pdu, destination=dest), forwarded=forwarded)
+        self.directPort.indication(PDU(pdu, destination=dest))
 
-    def confirmation(self, client, pdu, forwarded=False):
+    def confirmation(self, client, pdu):
         if _debug: UDPMultiplexer._debug("confirmation %r %r", client, pdu)
 
         # if this came from ourselves, dump it
@@ -168,10 +168,10 @@ class UDPMultiplexer:
         # check for the message type
         if msg_type == 0x01:
             if self.annexH.serverPeer:
-                self.annexH.response(PDU(pdu, source=src, destination=dest), forwarded=forwarded)
+                self.annexH.response(PDU(pdu, source=src, destination=dest))
         elif msg_type == 0x81:
             if self.annexJ.serverPeer:
-                self.annexJ.response(PDU(pdu, source=src, destination=dest), forwarded=forwarded)
+                self.annexJ.response(PDU(pdu, source=src, destination=dest))
         else:
             UDPMultiplexer._warning("unsupported message")
 
@@ -273,7 +273,7 @@ class AnnexJCodec(Client, Server):
         Client.__init__(self, cid)
         Server.__init__(self, sid)
 
-    def indication(self, rpdu, forwarded=False):
+    def indication(self, rpdu):
         if _debug: AnnexJCodec._debug("indication %r", rpdu)
 
         # encode it as a generic BVLL PDU
@@ -285,9 +285,9 @@ class AnnexJCodec(Client, Server):
         bvlpdu.encode(pdu)
 
         # send it downstream
-        self.request(pdu, forwarded=forwarded)
+        self.request(pdu)
 
-    def confirmation(self, pdu, forwarded=False):
+    def confirmation(self, pdu):
         if _debug: AnnexJCodec._debug("confirmation %r", pdu)
 
         # interpret as a BVLL PDU
@@ -299,7 +299,7 @@ class AnnexJCodec(Client, Server):
         rpdu.decode(bvlpdu)
 
         # send it upstream
-        self.response(rpdu, forwarded=forwarded)
+        self.response(rpdu)
 
 #
 #   BIPSAP
