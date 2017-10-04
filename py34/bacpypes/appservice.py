@@ -256,7 +256,7 @@ class ClientSSM(SSM):
             if _debug: ClientSSM._debug("    - release device information")
             self.ssmSAP.deviceInfoCache.release_device_info(self.remoteDevice)
 
-    def request(self, apdu):
+    def request(self, apdu, forwarded=False):
         """This function is called by client transaction functions when it wants
         to send a message to the device."""
         if _debug: ClientSSM._debug("request %r", apdu)
@@ -266,9 +266,9 @@ class ClientSSM(SSM):
         apdu.pduDestination = self.remoteDevice.address
 
         # send it via the device
-        self.ssmSAP.request(apdu)
+        self.ssmSAP.request(apdu, forwarded=forwarded)
 
-    def indication(self, apdu):
+    def indication(self, apdu, forwarded=False):
         """This function is called after the device has bound a new transaction
         and wants to start the process rolling."""
         if _debug: ClientSSM._debug("indication %r", apdu)
@@ -315,12 +315,12 @@ class ClientSSM(SSM):
             if self.ssmSAP.segmentationSupported not in ('segmentedTransmit', 'segmentedBoth'):
                 if _debug: ClientSSM._debug("    - local device can't send segmented requests")
                 abort = self.abort(AbortReason.segmentationNotSupported)
-                self.response(abort)
+                self.response(abort, forwarded=forwarded)
                 return
             if self.remoteDevice.segmentationSupported not in ('segmentedReceive', 'segmentedBoth'):
                 if _debug: ClientSSM._debug("    - remote device can't receive segmented requests")
                 abort = self.abort(AbortReason.segmentationNotSupported)
-                self.response(abort)
+                self.response(abort, forwarded=forwarded)
                 return
 
         ### check for APDUTooLong?
@@ -342,9 +342,9 @@ class ClientSSM(SSM):
             self.set_state(SEGMENTED_REQUEST, self.ssmSAP.segmentTimeout)
 
         # deliver to the device
-        self.request(self.get_segment(0))
+        self.request(self.get_segment(0), forwarded=forwarded)
 
-    def response(self, apdu):
+    def response(self, apdu, forwarded=False):
         """This function is called by client transaction functions when they want
         to send a message to the application."""
         if _debug: ClientSSM._debug("response %r", apdu)
@@ -354,19 +354,19 @@ class ClientSSM(SSM):
         apdu.pduDestination = None
 
         # send it to the application
-        self.ssmSAP.sap_response(apdu)
+        self.ssmSAP.sap_response(apdu, forwarded=forwarded)
 
-    def confirmation(self, apdu):
+    def confirmation(self, apdu, forwarded=False):
         """This function is called by the device for all upstream messages related
         to the transaction."""
         if _debug: ClientSSM._debug("confirmation %r", apdu)
 
         if self.state == SEGMENTED_REQUEST:
-            self.segmented_request(apdu)
+            self.segmented_request(apdu, forwarded=forwarded)
         elif self.state == AWAIT_CONFIRMATION:
-            self.await_confirmation(apdu)
+            self.await_confirmation(apdu, forwarded=forwarded)
         elif self.state == SEGMENTED_CONFIRMATION:
-            self.segmented_confirmation(apdu)
+            self.segmented_confirmation(apdu, forwarded=forwarded)
         else:
             raise RuntimeError("invalid state")
 
@@ -402,7 +402,7 @@ class ClientSSM(SSM):
         # return it
         return abort_pdu
 
-    def segmented_request(self, apdu):
+    def segmented_request(self, apdu, forwarded=False):
         """This function is called when the client is sending a segmented request
         and receives an apdu."""
         if _debug: ClientSSM._debug("segmented_request %r", apdu)
@@ -437,23 +437,23 @@ class ClientSSM(SSM):
 
             if not self.sentAllSegments:
                 abort = self.abort(AbortReason.invalidApduInThisState)
-                self.request(abort)     # send it to the device
-                self.response(abort)    # send it to the application
+                self.request(abort, forwarded=forwarded)     # send it to the device
+                self.response(abort, forwarded=forwarded)    # send it to the application
             else:
                 self.set_state(COMPLETED)
-                self.response(apdu)
+                self.response(apdu, forwarded=forwarded)
 
         elif (apdu.apduType == ComplexAckPDU.pduType):
             if _debug: ClientSSM._debug("    - complex ack")
 
             if not self.sentAllSegments:
                 abort = self.abort(AbortReason.invalidApduInThisState)
-                self.request(abort)     # send it to the device
-                self.response(abort)    # send it to the application
+                self.request(abort, forwarded=forwarded)     # send it to the device
+                self.response(abort, forwarded=forwarded)    # send it to the application
 
             elif not apdu.apduSeg:
                 self.set_state(COMPLETED)
-                self.response(apdu)
+                self.response(apdu, forwarded=forwarded)
 
             else:
                 # set the segmented response context
@@ -470,7 +470,7 @@ class ClientSSM(SSM):
 
             self.set_state(COMPLETED)
             self.response = apdu
-            self.response(apdu)
+            self.response(apdu, forwarded=forwarded)
 
         else:
             raise RuntimeError("invalid APDU (2)")
@@ -491,20 +491,20 @@ class ClientSSM(SSM):
             abort = self.abort(AbortReason.noResponse)
             self.response(abort)
 
-    def await_confirmation(self, apdu):
+    def await_confirmation(self, apdu, forwarded=False):
         if _debug: ClientSSM._debug("await_confirmation %r", apdu)
 
         if (apdu.apduType == AbortPDU.pduType):
             if _debug: ClientSSM._debug("    - server aborted")
 
             self.set_state(ABORTED)
-            self.response(apdu)
+            self.response(apdu, forwarded=forwarded)
 
         elif (apdu.apduType == SimpleAckPDU.pduType) or (apdu.apduType == ErrorPDU.pduType) or (apdu.apduType == RejectPDU.pduType):
             if _debug: ClientSSM._debug("    - simple ack, error, or reject")
 
             self.set_state(COMPLETED)
-            self.response(apdu)
+            self.response(apdu, forwarded=forwarded)
 
         elif (apdu.apduType == ComplexAckPDU.pduType):
             if _debug: ClientSSM._debug("    - complex ack")
@@ -514,12 +514,12 @@ class ClientSSM(SSM):
                 if _debug: ClientSSM._debug("    - unsegmented")
 
                 self.set_state(COMPLETED)
-                self.response(apdu)
+                self.response(apdu, forwarded=forwarded)
 
             elif self.ssmSAP.segmentationSupported not in ('segmentedReceive', 'segmentedBoth'):
                 if _debug: ClientSSM._debug("    - local device can't receive segmented messages")
                 abort = self.abort(AbortReason.segmentationNotSupported)
-                self.response(abort)
+                self.response(abort, forwarded=forwarded)
 
             elif apdu.apduSeq == 0:
                 if _debug: ClientSSM._debug("    - segmented response")
@@ -534,14 +534,14 @@ class ClientSSM(SSM):
 
                 # send back a segment ack
                 segack = SegmentAckPDU( 0, 0, self.invokeID, self.initialSequenceNumber, self.actualWindowSize )
-                self.request(segack)
+                self.request(segack, forwarded=forwarded)
 
             else:
                 if _debug: ClientSSM._debug("    - invalid APDU in this state")
 
                 abort = self.abort(AbortReason.invalidApduInThisState)
-                self.request(abort) # send it to the device
-                self.response(abort) # send it to the application
+                self.request(abort, forwarded=forwarded) # send it to the device
+                self.response(abort, forwarded=forwarded) # send it to the application
 
         elif (apdu.apduType == SegmentAckPDU.pduType):
             if _debug: ClientSSM._debug("    - segment ack(!?)")
@@ -568,7 +568,7 @@ class ClientSSM(SSM):
             abort = self.abort(AbortReason.noResponse)
             self.response(abort)
 
-    def segmented_confirmation(self, apdu):
+    def segmented_confirmation(self, apdu, forwarded=False):
         if _debug: ClientSSM._debug("segmented_confirmation %r", apdu)
 
         # the only messages we should be getting are complex acks
@@ -576,8 +576,8 @@ class ClientSSM(SSM):
             if _debug: ClientSSM._debug("    - complex ack required")
 
             abort = self.abort(AbortReason.invalidApduInThisState)
-            self.request(abort) # send it to the device
-            self.response(abort) # send it to the application
+            self.request(abort, forwarded=forwarded) # send it to the device
+            self.response(abort, forwarded=forwarded) # send it to the application
             return
 
         # it must be segmented
@@ -585,8 +585,8 @@ class ClientSSM(SSM):
             if _debug: ClientSSM._debug("    - must be segmented")
 
             abort = self.abort(AbortReason.invalidApduInThisState)
-            self.request(abort) # send it to the device
-            self.response(abort) # send it to the application
+            self.request(abort, forwarded=forwarded) # send it to the device
+            self.response(abort, forwarded=forwarded) # send it to the application
             return
 
         # proper segment number
@@ -596,7 +596,7 @@ class ClientSSM(SSM):
             # segment received out of order
             self.restart_timer(self.ssmSAP.segmentTimeout)
             segack = SegmentAckPDU( 1, 0, self.invokeID, self.lastSequenceNumber, self.actualWindowSize )
-            self.request(segack)
+            self.request(segack, forwarded=forwarded)
             return
 
         # add the data
@@ -611,10 +611,10 @@ class ClientSSM(SSM):
 
             # send a final ack
             segack = SegmentAckPDU( 0, 0, self.invokeID, self.lastSequenceNumber, self.actualWindowSize )
-            self.request(segack)
+            self.request(segack, forwarded=forwarded)
 
             self.set_state(COMPLETED)
-            self.response(self.segmentAPDU)
+            self.response(self.segmentAPDU, forwarded=forwarded)
 
         elif apdu.apduSeq == ((self.initialSequenceNumber + self.actualWindowSize) % 256):
             if _debug: ClientSSM._debug("    - last segment in the group")
@@ -622,7 +622,7 @@ class ClientSSM(SSM):
             self.initialSequenceNumber = self.lastSequenceNumber
             self.restart_timer(self.ssmSAP.segmentTimeout)
             segack = SegmentAckPDU( 0, 0, self.invokeID, self.lastSequenceNumber, self.actualWindowSize )
-            self.request(segack)
+            self.request(segack, forwarded=forwarded)
 
         else:
             # wait for more segments
@@ -702,7 +702,7 @@ class ServerSSM(SSM):
         # send it via the device
         self.ssmSAP.request(apdu, forwarded=forwarded)
 
-    def confirmation(self, apdu):
+    def confirmation(self, apdu, forwarded=False):
         """This function is called when the application has provided a response
         and needs it to be sent to the client."""
         if _debug: ServerSSM._debug("confirmation %r", apdu)
@@ -718,7 +718,7 @@ class ServerSSM(SSM):
             self.set_state(ABORTED)
 
             # send the response to the device
-            self.response(apdu)
+            self.response(apdu, forwarded=forwarded)
             return
 
         # simple response
@@ -729,7 +729,7 @@ class ServerSSM(SSM):
             self.set_state(COMPLETED)
 
             # send the response to the device
-            self.response(apdu)
+            self.response(apdu, forwarded=forwarded)
             return
 
         # complex ack
@@ -765,14 +765,14 @@ class ServerSSM(SSM):
                 if self.ssmSAP.segmentationSupported not in ('segmentedTransmit', 'segmentedBoth'):
                     if _debug: ServerSSM._debug("    - server can't send segmented responses")
                     abort = self.abort(AbortReason.segmentationNotSupported)
-                    self.reponse(abort)
+                    self.reponse(abort, forwarded=forwarded)
                     return
 
                 # make sure client supports segmented receive
                 if self.remoteDevice.segmentationSupported not in ('segmentedReceive', 'segmentedBoth'):
                     if _debug: ServerSSM._debug("    - client can't receive segmented responses")
                     abort = self.abort(AbortReason.segmentationNotSupported)
-                    self.response(abort)
+                    self.response(abort, forwarded=forwarded)
                     return
 
             ### check for APDUTooLong?
@@ -1269,6 +1269,7 @@ class StateMachineAccessPoint(Client, ServiceAccessPoint):
             else:
                 return
 
+            if _debug: StateMachineAccessPoint._debug("serverTransaction %r", tr)
             # pass control to the transaction
             tr.confirmation(apdu, forwarded=forwarded)
 

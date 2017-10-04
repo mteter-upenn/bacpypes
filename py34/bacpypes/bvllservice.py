@@ -39,8 +39,8 @@ class _MultiplexClient(Client):
         Client.__init__(self)
         self.multiplexer = mux
 
-    def confirmation(self, pdu):
-        self.multiplexer.confirmation(self, pdu)
+    def confirmation(self, pdu, forwarded=False):
+        self.multiplexer.confirmation(self, pdu, forwarded=forwarded)
 
 class _MultiplexServer(Server):
 
@@ -48,8 +48,8 @@ class _MultiplexServer(Server):
         Server.__init__(self)
         self.multiplexer = mux
 
-    def indication(self, pdu):
-        self.multiplexer.indication(self, pdu)
+    def indication(self, pdu, forwarded=False):
+        self.multiplexer.indication(self, pdu, forwarded=forwarded)
 
 #
 #   UDPMultiplexer
@@ -117,7 +117,7 @@ class UDPMultiplexer:
         if self.broadcastPort:
             self.broadcastPort.close_socket()
 
-    def indication(self, server, pdu):
+    def indication(self, server, pdu, forwarded=False):
         if _debug: UDPMultiplexer._debug("indication %r %r", server, pdu)
 
         # check for a broadcast message
@@ -136,9 +136,9 @@ class UDPMultiplexer:
         else:
             raise RuntimeError("invalid destination address type")
 
-        self.directPort.indication(PDU(pdu, destination=dest))
+        self.directPort.indication(PDU(pdu, destination=dest), forwarded=forwarded)
 
-    def confirmation(self, client, pdu):
+    def confirmation(self, client, pdu, forwarded=False):
         if _debug: UDPMultiplexer._debug("confirmation %r %r", client, pdu)
 
         # if this came from ourselves, dump it
@@ -168,10 +168,10 @@ class UDPMultiplexer:
         # check for the message type
         if msg_type == 0x01:
             if self.annexH.serverPeer:
-                self.annexH.response(PDU(pdu, source=src, destination=dest))
+                self.annexH.response(PDU(pdu, source=src, destination=dest), forwarded=forwarded)
         elif msg_type == 0x81:
             if self.annexJ.serverPeer:
-                self.annexJ.response(PDU(pdu, source=src, destination=dest))
+                self.annexJ.response(PDU(pdu, source=src, destination=dest), forwarded=forwarded)
         else:
             UDPMultiplexer._warning("unsupported message")
 
@@ -193,7 +193,7 @@ class BTR(Client, Server, DebugContents):
         # initialize a dicitonary of peers
         self.peers = {}
 
-    def indication(self, pdu):
+    def indication(self, pdu, forwarded=False):
         if _debug: BTR._debug("indication %r", pdu)
 
         # check for local stations
@@ -204,7 +204,7 @@ class BTR(Client, Server, DebugContents):
                 return
 
             # send it downstream
-            self.request(pdu)
+            self.request(pdu, forwarded=forwarded)
 
         # check for broadcasts
         elif pdu.pduDestination.addrType == Address.localBroadcastAddr:
@@ -213,12 +213,12 @@ class BTR(Client, Server, DebugContents):
                 xpdu = PDU(pdu.pduData, destination=peerAddr)
 
                 # send it downstream
-                self.request(xpdu)
+                self.request(xpdu, forwarded=forwarded)
 
         else:
             raise RuntimeError("invalid destination address type (2)")
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         if _debug: BTR._debug("confirmation %r", pdu)
 
         # make sure it came from a peer
@@ -227,7 +227,7 @@ class BTR(Client, Server, DebugContents):
             return
 
         # send it upstream
-        self.response(pdu)
+        self.response(pdu, forwarded=forwarded)
 
     def add_peer(self, peerAddr, networks=None):
         """Add a peer and optionally provide a list of the reachable networks."""
@@ -273,7 +273,7 @@ class AnnexJCodec(Client, Server):
         Client.__init__(self, cid)
         Server.__init__(self, sid)
 
-    def indication(self, rpdu):
+    def indication(self, rpdu, forwarded=False):
         if _debug: AnnexJCodec._debug("indication %r", rpdu)
 
         # encode it as a generic BVLL PDU
@@ -285,9 +285,9 @@ class AnnexJCodec(Client, Server):
         bvlpdu.encode(pdu)
 
         # send it downstream
-        self.request(pdu)
+        self.request(pdu, forwarded=forwarded)
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         if _debug: AnnexJCodec._debug("confirmation %r", pdu)
 
         # interpret as a BVLL PDU
@@ -299,7 +299,7 @@ class AnnexJCodec(Client, Server):
         rpdu.decode(bvlpdu)
 
         # send it upstream
-        self.response(rpdu)
+        self.response(rpdu, forwarded=forwarded)
 
 #
 #   BIPSAP
@@ -363,21 +363,21 @@ class BIPSimple(BIPSAP, Client, Server):
         else:
             BIPSimple._warning("invalid destination address: %r", pdu.pduDestination)
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         if _debug: BIPSimple._debug("confirmation %r", pdu)
 
         # some kind of response to a request
         if isinstance(pdu, Result):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadBroadcastDistributionTableAck):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadForeignDeviceTableAck):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, OriginalUnicastNPDU):
             # build a vanilla PDU
@@ -385,7 +385,7 @@ class BIPSimple(BIPSAP, Client, Server):
             if _debug: BIPSimple._debug("    - xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, OriginalBroadcastNPDU):
             # build a PDU with a local broadcast address
@@ -393,7 +393,7 @@ class BIPSimple(BIPSAP, Client, Server):
             if _debug: BIPSimple._debug("    - xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ForwardedNPDU):
             # build a PDU with the source from the real source
@@ -503,7 +503,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         else:
             BIPForeign._warning("invalid destination address: %r", pdu.pduDestination)
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         if _debug: BIPForeign._debug("confirmation %r", pdu)
 
         # check for a registration request result
@@ -536,11 +536,11 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         if isinstance(pdu, ReadBroadcastDistributionTableAck):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadForeignDeviceTableAck):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, OriginalUnicastNPDU):
             print('confirmation originalunicastnpdu')
@@ -548,7 +548,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             xpdu = PDU(pdu.pduData, source=pdu.pduSource, destination=pdu.pduDestination, user_data=pdu.pduUserData)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ForwardedNPDU):
             # build a PDU with the source from the real source
@@ -634,7 +634,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
         # install so process_task runs
         self.install_task()
 
-    def indication(self, pdu):
+    def indication(self, pdu, forwarded=False):
         if _debug: BIPBBMD._debug("indication %r", pdu)
 
         # check for local stations
@@ -677,13 +677,13 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
         else:
             BIPBBMD._warning("invalid destination address: %r", pdu.pduDestination)
 
-    def confirmation(self, pdu):
+    def confirmation(self, pdu, forwarded=False):
         if _debug: BIPBBMD._debug("confirmation %r",  pdu)
 
         # some kind of response to a request
         if isinstance(pdu, Result):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, WriteBroadcastDistributionTable):
             # build a response
@@ -691,7 +691,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             xpdu.pduDestination = pdu.pduSource
 
             # send it downstream
-            self.request(xpdu)
+            self.request(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadBroadcastDistributionTable):
             # build a response
@@ -700,11 +700,11 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - xpdu: %r", xpdu)
 
             # send it downstream
-            self.request(xpdu)
+            self.request(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadBroadcastDistributionTableAck):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, ForwardedNPDU):
             # build a PDU with the source from the real source
@@ -712,7 +712,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - upstream xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=True)
 
             # build a forwarded NPDU to send out
             xpdu = ForwardedNPDU(pdu.bvlciAddress, pdu, destination=None, user_data=pdu.pduUserData)
@@ -739,7 +739,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - xpdu: %r", xpdu)
 
             # send it downstream
-            self.request(xpdu)
+            self.request(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadForeignDeviceTable):
             # build a response
@@ -747,11 +747,11 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - xpdu: %r", xpdu)
 
             # send it downstream
-            self.request(xpdu)
+            self.request(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ReadForeignDeviceTableAck):
             # send this to the service access point
-            self.sap_response(pdu)
+            self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, DeleteForeignDeviceTableEntry):
             # process the request
@@ -763,7 +763,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - xpdu: %r", xpdu)
 
             # send it downstream
-            self.request(xpdu)
+            self.request(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, DistributeBroadcastToNetwork):
             # build a PDU with a local broadcast address
@@ -771,7 +771,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - upstream xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=forwarded)
 
             # build a forwarded NPDU to send out
             xpdu = ForwardedNPDU(pdu.pduSource, pdu, user_data=pdu.pduUserData)
@@ -801,7 +801,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - upstream xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, OriginalBroadcastNPDU):
             # build a PDU with a local broadcast address
@@ -809,7 +809,7 @@ class BIPBBMD(BIPSAP, Client, Server, RecurringTask, DebugContents):
             if _debug: BIPBBMD._debug("    - upstream xpdu: %r", xpdu)
 
             # send it upstream
-            self.response(xpdu)
+            self.response(xpdu, forwarded=forwarded)
 
             # make a forwarded PDU
             xpdu = ForwardedNPDU(pdu.pduSource, pdu, user_data=pdu.pduUserData)
@@ -943,23 +943,23 @@ class BVLLServiceElement(ApplicationServiceElement):
         if _debug: BVLLServiceElement._debug("__init__ aseID=%r", aseID)
         ApplicationServiceElement.__init__(self, aseID)
 
-    def indication(self, npdu):
+    def indication(self, npdu, forwarded=False):
         if _debug: BVLLServiceElement._debug("indication %r %r", npdu)
 
         # redirect
         fn = npdu.__class__.__name__
         if hasattr(self, fn):
-            getattr(self, fn)(npdu)
+            getattr(self, fn)(npdu, forwarded=forwarded)
         else:
             BVLLServiceElement._warning("no handler for %s", fn)
 
-    def confirmation(self, npdu):
+    def confirmation(self, npdu, forwarded=False):
         if _debug: BVLLServiceElement._debug("confirmation %r %r", npdu)
 
         # redirect
         fn = npdu.__class__.__name__
         if hasattr(self, fn):
-            getattr(self, fn)(npdu)
+            getattr(self, fn)(npdu, forwarded=forwarded)
         else:
             BVLLServiceElement._warning("no handler for %s", fn)
 

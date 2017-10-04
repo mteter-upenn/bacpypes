@@ -589,13 +589,13 @@ class NetworkServiceElement(ApplicationServiceElement):
         if hasattr(self, fn):
             getattr(self, fn)(adapter, npdu, forwarded=forwarded)
 
-    def confirmation(self, adapter, npdu):
+    def confirmation(self, adapter, npdu, forwarded=False):
         if _debug: NetworkServiceElement._debug("confirmation %r %r", adapter, npdu)
 
         # redirect
         fn = npdu.__class__.__name__
         if hasattr(self, fn):
-            getattr(self, fn)(adapter, npdu)
+            getattr(self, fn)(adapter, npdu, forwarded=forwarded)
 
     #-----
 
