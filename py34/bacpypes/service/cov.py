@@ -636,3 +636,7 @@ class ChangeOfValueServices(Capability):
 
         # return the result
         self.response(response, forwarded=forwarded)
+
+    def do_UnconfirmedCOVNotificationRequest(self, apdu, forwarded=False):
+        if _debug: ChangeOfValueServices._debug("unconfirmedCOVNotification, %r", apdu)
+        pass

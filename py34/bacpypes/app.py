@@ -311,6 +311,12 @@ class Application(ApplicationServiceElement, Collector):
             if hasattr(self, service_helper):
                 service_supported = ConfirmedServiceChoice._xlate_table[service_choice]
                 services_supported[service_supported] = 1
+            #     if _debug: Application._debug("SUPPORTED: service_choice: %s, service supported: %s", service_choice,
+            #                                   service_supported)
+            # else:
+            #     service_supported = ConfirmedServiceChoice._xlate_table[service_choice]
+            #     if _debug: Application._debug("UNSUPPORTED: service_choice: %s, service supported: %s", service_choice,
+            #                                   service_supported)
 
         # look through the unconfirmed services
         for service_choice, service_request_class in unconfirmed_request_types.items():
@@ -318,6 +324,12 @@ class Application(ApplicationServiceElement, Collector):
             if hasattr(self, service_helper):
                 service_supported = UnconfirmedServiceChoice._xlate_table[service_choice]
                 services_supported[service_supported] = 1
+            #     if _debug: Application._debug("SUPPORTED: service_choice: %s, service supported: %s", service_choice,
+            #                                   service_supported)
+            # else:
+            #     service_supported = UnconfirmedServiceChoice._xlate_table[service_choice]
+            #     if _debug: Application._debug("UNSUPPORTED: service_choice: %s, service supported: %s", service_choice,
+            #                                   service_supported)
 
         # return the bit list
         return services_supported
