@@ -434,17 +434,17 @@ class ApplicationIOController(IOController, Application):
             if _debug: ApplicationIOController._debug("    - queue is empty")
             del self.queue_by_address[address]
 
-    def request(self, apdu):
+    def request(self, apdu, forwarded=False):
         if _debug: ApplicationIOController._debug("request %r", apdu)
 
         # send it downstream
-        super(ApplicationIOController, self).request(apdu)
+        super(ApplicationIOController, self).request(apdu, forwarded=forwarded)
 
         # if this was an unconfirmed request, it's complete, no message
         if isinstance(apdu, UnconfirmedRequestPDU):
             self._app_complete(apdu.pduDestination, None)
 
-    def confirmation(self, apdu):
+    def confirmation(self, apdu, forwarded=False):
         if _debug: ApplicationIOController._debug("confirmation %r", apdu)
 
         # this is an ack, error, reject or abort
