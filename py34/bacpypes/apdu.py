@@ -1697,7 +1697,7 @@ class UnconfirmedServiceChoice(Enumerated):
         'whoHas':7,
         'whoIs':8,
         'utcTimeSynchronization':9,
-        'writeGroup':10,
+        # 'writeGroup':10,
         }
 
 expand_enumerations(UnconfirmedServiceChoice)
