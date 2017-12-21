@@ -162,7 +162,8 @@ class ServicesSupported(BitString):
         , 'getEventInformation':39
         # , 'writeGroup':40
         }
-    bitLen = 41
+    # bitLen = 41
+    bitLen = 40
 
 class StatusFlags(BitString):
     bitNames = \
