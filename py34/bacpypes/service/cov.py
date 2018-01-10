@@ -194,7 +194,7 @@ class COVDetection(DetectionAlgorithm):
 
             # build the value
             bundle_value = property_datatype(self.obj._values[property_name])
-            if _debug: COVDetection._debug("        - bundle_value: %r", bundle_value)
+            if _debug: COVDetection._debug("        - bundle_value: %s", bundle_value)
 
             # bundle it into a sequence
             property_value = PropertyValue(
