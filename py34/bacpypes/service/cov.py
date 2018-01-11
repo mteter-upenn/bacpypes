@@ -563,7 +563,7 @@ class ChangeOfValueServices(Capability):
 
     def cov_ack(self, cov, request, response):
         # if _debug: ChangeOfValueServices._debug("cov_ack %r %s %s", cov, request, response)
-        if _debug: ChangeOfValueServices._debug("cov_ack %r", cov)  # %s %s", cov, request, response)
+        if _debug: ChangeOfValueServices._debug("cov_ack")  # %s %s", cov, request, response)
 
     def cov_error(self, cov, request, response):
         if _debug: ChangeOfValueServices._debug("cov_error %r %r %r", cov, request, response)
