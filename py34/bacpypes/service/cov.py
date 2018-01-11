@@ -181,7 +181,8 @@ class COVDetection(DetectionAlgorithm):
 
         # get the current time from the task manager
         current_time = TaskManager().get_time()
-        if _debug: COVDetection._debug("    - current_time: %r", current_time)
+        obj_parent_dev = self.obj._app.localDevice.objectIdentifier
+        if _debug: COVDetection._debug("    - current_time: %r, device: %s", current_time, obj_parent_dev)
 
         # create a list of values
         list_of_values = []
@@ -523,7 +524,8 @@ class ChangeOfValueServices(Capability):
             del self.cov_detections[cov.obj_ref]
 
     def cov_notification(self, cov, request):
-        if _debug: ChangeOfValueServices._debug("cov_notification %s %s", str(cov), str(request))
+        obj_parent_dev = self.localDevice.objectIdentifier
+        if _debug: ChangeOfValueServices._debug("cov_notification %s %s %s", obj_parent_dev, str(cov), str(request))
 
         # create an IOCB with the request
         iocb = IOCB(request)
