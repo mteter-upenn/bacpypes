@@ -182,9 +182,10 @@ class COVDetection(DetectionAlgorithm):
             return
 
         # get the current time from the task manager
-        current_time = strftime('%H:%M:%S %m/%d/%Y')
+        current_time = TaskManager.get_time()
+        current_time_str = strftime('%H:%M:%S %m/%d/%Y')
         obj_parent_dev = self.obj._app.localDevice.objectIdentifier
-        if _debug: COVDetection._debug("    - current_time: %s, device: %s", current_time, obj_parent_dev)
+        if _debug: COVDetection._debug("    - current_time: %s, device: %s", current_time_str, obj_parent_dev)
 
         # create a list of values
         list_of_values = []
