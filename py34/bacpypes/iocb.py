@@ -700,7 +700,6 @@ class IOQController(IOController):
         # if we're busy, queue it
         if (self.state != CTRL_IDLE):
             if _debug: IOQController._debug("    - busy, request queued")
-            raise KeyboardInterrupt
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
             return
@@ -758,7 +757,7 @@ class IOQController(IOController):
             # change our state
             self.state = CTRL_WAITING
             _statelog.debug("%s %s %s" % (_strftime(), self.name, "waiting"))
-
+            if _debug: IOQController._debug("    WAIT_TIME!!!!!!!!!!!!!!!!!!!! %s %s", self.wait_time, self.name)
             # schedule a call in the future
             task = FunctionTask(IOQController._wait_trigger, self)
             task.install_task(_time() + self.wait_time)

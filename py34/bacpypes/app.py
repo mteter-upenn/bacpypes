@@ -414,7 +414,7 @@ class ApplicationIOController(IOController, Application):
             self.queue_by_address[destination_address] = queue
         if _debug: ApplicationIOController._debug("    - queue: %r", queue)
         if _debug: ApplicationIOController._debug("    - queue dict: %r", self.queue_by_address)
-
+        # queue.wait_time = 0.5  # WILL THIS HELP WHEN ADDING TASKS?
         # ask the queue to process the request
         queue.request_io(iocb)
 
