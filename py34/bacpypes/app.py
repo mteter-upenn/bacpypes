@@ -406,13 +406,14 @@ class ApplicationIOController(IOController, Application):
         # get the destination address from the pdu
         destination_address = iocb.args[0].pduDestination
         if _debug: ApplicationIOController._debug("    - destination_address: %r", destination_address)
-
+        if _debug: ApplicationIOController._debug("    - queue dict start: %r", self.queue_by_address)
         # look up the queue
         queue = self.queue_by_address.get(destination_address, None)
         if not queue:
             queue = SieveQueue(self.request, destination_address)
             self.queue_by_address[destination_address] = queue
         if _debug: ApplicationIOController._debug("    - queue: %r", queue)
+        if _debug: ApplicationIOController._debug("    - queue dict: %r", self.queue_by_address)
 
         # ask the queue to process the request
         queue.request_io(iocb)
