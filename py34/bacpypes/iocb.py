@@ -699,7 +699,7 @@ class IOQController(IOController):
 
         # if we're busy, queue it
         if (self.state != CTRL_IDLE):
-            if _debug: IOQController._debug("    - busy, request queued")
+            if _debug: IOQController._debug("    - BUSY, request queued ########################################")
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
             return
