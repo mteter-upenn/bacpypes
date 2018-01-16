@@ -50,7 +50,7 @@ _stateNames = {
 
 CTRL_IDLE = 0       # nothing happening
 CTRL_ACTIVE = 1     # working on an iocb
-CTRL_WAITING = 1    # waiting between iocb requests (throttled)
+CTRL_WAITING = 2    # waiting between iocb requests (throttled)
 
 _ctrlStateNames = {
     0: 'IDLE',
@@ -700,7 +700,8 @@ class IOQController(IOController):
 
         # if we're busy, queue it
         if (self.state != CTRL_IDLE):
-            if _debug: IOQController._debug("    - BUSY, request queued ########################################")
+            if _debug: IOQController._debug("    - BUSY %s, request queued ########################################",
+                                            self.state)
             bp()
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
