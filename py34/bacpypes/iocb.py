@@ -605,7 +605,7 @@ class IOController(object):
 
     def complete_io(self, iocb, msg):
         """Called by a handler to return data to the client."""
-        if _debug: IOController._debug("complete_io %r %r", iocb, msg)
+        if _debug: IOController._debug("complete_io %r %r %r",iocb.state, iocb, msg)
 
         # if it completed, leave it alone
         if iocb.ioState == COMPLETED:
@@ -747,6 +747,8 @@ class IOQController(IOController):
 
         # check to see if it is completing the active one
         if iocb is not self.active_iocb:
+            if _debug: IOQController._debug("NOT THE CURRENT IOCB !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            bp()
             raise RuntimeError("not the current iocb")
 
         # normal completion
