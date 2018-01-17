@@ -4,7 +4,7 @@
 Change Of Value Service
 """
 
-from time import strftime
+from time import strftime, localtime
 
 from ..debugging import bacpypes_debugging, DebugContents, ModuleLogger
 from ..capability import Capability
@@ -26,6 +26,14 @@ from .detect import DetectionAlgorithm, monitor_filter
 # some debugging
 _debug = 0
 _log = ModuleLogger(globals())
+
+# time string
+def _strftime(cur_time=None):
+    if cur_time is None:
+        cur_time = TaskManager().get_time()
+    time_dec = str(round(cur_time - int(cur_time), 6))[1:]
+    time_struct = localtime(cur_time)
+    return strftime('%X' + time_dec + ' %x', time_struct)
 
 #
 #   SubscriptionList
@@ -183,9 +191,8 @@ class COVDetection(DetectionAlgorithm):
 
         # get the current time from the task manager
         current_time = TaskManager().get_time()
-        current_time_str = strftime('%H:%M:%S %m/%d/%Y')
         obj_parent_dev = self.obj._app.localDevice.objectIdentifier
-        if _debug: COVDetection._debug("    - current_time: %s, device: %s", current_time_str, obj_parent_dev)
+        if _debug: COVDetection._debug("    - current_time: %s, device: %s", _strftime(current_time), obj_parent_dev)
 
         # create a list of values
         list_of_values = []

@@ -65,10 +65,11 @@ TimeoutError = RuntimeError("timeout")
 # current time formatting (short version)
 # _strftime = lambda: "%011.6f" % (_time() % 3600,)
 # _strftime = lambda: strftime('%H:%M:%S %m/%d/%Y')
-def _strftime():
-    time_sec = _time()
-    time_dec = str(round(time_sec - int(time_sec), 6))[1:]
-    time_struct = localtime(time_sec)
+def _strftime(cur_time=None):
+    if cur_time is None:
+        cur_time = _time()
+    time_dec = str(round(cur_time - int(cur_time), 6))[1:]
+    time_struct = localtime(cur_time)
     return strftime('%X' + time_dec + ' %x', time_struct)
 
 #
