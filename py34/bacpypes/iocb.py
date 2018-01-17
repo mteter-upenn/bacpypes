@@ -702,7 +702,7 @@ class IOQController(IOController):
         if (self.state != CTRL_IDLE):
             if _debug: IOQController._debug("    - BUSY %s, request queued ########################################",
                                             self.state)
-            # bp()
+            bp()
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
             return
@@ -761,7 +761,7 @@ class IOQController(IOController):
             self.state = CTRL_WAITING
             _statelog.debug("%s %s %s" % (_strftime(), self.name, "waiting"))
             if _debug: IOQController._debug("    WAIT_TIME!!!!!!!!!!!!!!!!!!!! %s %s", self.wait_time, self.name)
-            # bp()
+            bp()
             # schedule a call in the future
             task = FunctionTask(IOQController._wait_trigger, self)
             task.install_task(_time() + self.wait_time)
