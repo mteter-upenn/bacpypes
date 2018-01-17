@@ -612,7 +612,7 @@ class IOController(object):
 
     def complete_io(self, iocb, msg):
         """Called by a handler to return data to the client."""
-        if _debug: IOController._debug("complete_io %s %r %r",iocb.state, iocb, msg)
+        if _debug: IOController._debug("complete_io %s %r %r",iocb.ioState, iocb, msg)
 
         # if it completed, leave it alone
         if iocb.ioState == COMPLETED:
