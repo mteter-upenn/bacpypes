@@ -8,7 +8,7 @@ import sys
 from pdb import set_trace as bp
 import logging
 from time import time as _time
-from time import strftime
+from time import strftime, localtime
 
 import threading
 from bisect import bisect_left
@@ -64,7 +64,12 @@ TimeoutError = RuntimeError("timeout")
 
 # current time formatting (short version)
 # _strftime = lambda: "%011.6f" % (_time() % 3600,)
-_strftime = lambda: strftime('%H:%M:%S %m/%d/%Y')
+# _strftime = lambda: strftime('%H:%M:%S %m/%d/%Y')
+def _strftime():
+    time_sec = _time()
+    time_dec = str(round(time_sec - int(time_sec), 6))[1:]
+    time_struct = localtime(time_sec)
+    return strftime('%X' + time_dec + ' %x', time_struct)
 
 #
 #   IOCB - Input Output Control Block
@@ -607,7 +612,7 @@ class IOController(object):
 
     def complete_io(self, iocb, msg):
         """Called by a handler to return data to the client."""
-        if _debug: IOController._debug("complete_io %r %r %r",iocb.state, iocb, msg)
+        if _debug: IOController._debug("complete_io %s %r %r",iocb.state, iocb, msg)
 
         # if it completed, leave it alone
         if iocb.ioState == COMPLETED:
@@ -813,7 +818,8 @@ class IOQController(IOController):
 
         # if there is nothing to do, return
         if not self.ioQueue.queue:
-            if _debug: IOQController._debug("    - empty queue")
+            if _debug: IOQController._debug("    - empty queue, %s, THE END?????????????????????????????????",
+                                            self.state)
             return
 
         # get the next iocb
