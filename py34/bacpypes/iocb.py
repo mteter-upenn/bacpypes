@@ -8,6 +8,7 @@ import sys
 from pdb import set_trace as bp
 import logging
 from time import time as _time
+from time import strftime
 
 import threading
 from bisect import bisect_left
@@ -62,7 +63,8 @@ _ctrlStateNames = {
 TimeoutError = RuntimeError("timeout")
 
 # current time formatting (short version)
-_strftime = lambda: "%011.6f" % (_time() % 3600,)
+# _strftime = lambda: "%011.6f" % (_time() % 3600,)
+_strftime = lambda: strftime('%H:%M:%S %m/%d/%Y')
 
 #
 #   IOCB - Input Output Control Block
@@ -702,6 +704,8 @@ class IOQController(IOController):
         if (self.state != CTRL_IDLE):
             if _debug: IOQController._debug("    - BUSY %s, request queued ########################################",
                                             self.state)
+            if self.state == CTRL_ACTIVE:
+                if _debug: IOQController._debug("    - ACTIVE IOCB: %r", self.active_iocb)
             bp()
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
@@ -736,7 +740,7 @@ class IOQController(IOController):
 
         # change our state
         self.state = CTRL_ACTIVE
-        _statelog.debug("%s %s %s" % (_strftime(), self.name, "active"))
+        _statelog.debug("%s %s %s" % (_strftime(), self.name, "SET TO ACTIVE, active_io"))
 
         # keep track of the iocb
         self.active_iocb = iocb
@@ -771,7 +775,7 @@ class IOQController(IOController):
         else:
             # change our state
             self.state = CTRL_IDLE
-            _statelog.debug("%s %s %s" % (_strftime(), self.name, "idle"))
+            _statelog.debug("%s %s %s" % (_strftime(), self.name, "RETURN TO IDLE, complete_io"))
 
             # look for more to do
             deferred(IOQController._trigger, self)
@@ -793,7 +797,7 @@ class IOQController(IOController):
 
         # change our state
         self.state = CTRL_IDLE
-        _statelog.debug("%s %s %s" % (_strftime(), self.name, "idle"))
+        _statelog.debug("%s %s %s" % (_strftime(), self.name, "RETURN TO IDLE, abort_io"))
 
         # look for more to do
         deferred(IOQController._trigger, self)
@@ -843,7 +847,7 @@ class IOQController(IOController):
 
         # change our state
         self.state = CTRL_IDLE
-        _statelog.debug("%s %s %s" % (_strftime(), self.name, "idle"))
+        _statelog.debug("%s %s %s" % (_strftime(), self.name, "RETURN TO IDLE, _wait_trigger"))
 
         # look for more to do
         IOQController._trigger(self)
