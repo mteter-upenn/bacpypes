@@ -5,7 +5,7 @@ IOCB Module
 """
 
 import sys
-from pdb import set_trace as bp
+# from pdb import set_trace as bp
 import logging
 from time import time as _time
 from time import strftime, localtime
@@ -712,7 +712,7 @@ class IOQController(IOController):
                                             self.state)
             if self.state == CTRL_ACTIVE:
                 if _debug: IOQController._debug("    - ACTIVE IOCB: %r", self.active_iocb)
-            bp()
+            # bp()
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
             return
@@ -758,7 +758,7 @@ class IOQController(IOController):
         # check to see if it is completing the active one
         if iocb is not self.active_iocb:
             if _debug: IOQController._debug("NOT THE CURRENT IOCB !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            bp()
+            # bp()
             raise RuntimeError("not the current iocb")
 
         # normal completion
@@ -773,7 +773,7 @@ class IOQController(IOController):
             self.state = CTRL_WAITING
             _statelog.debug("%s %s %s" % (_strftime(), self.name, "waiting"))
             if _debug: IOQController._debug("    WAIT_TIME!!!!!!!!!!!!!!!!!!!! %s %s", self.wait_time, self.name)
-            bp()
+            # bp()
             # schedule a call in the future
             task = FunctionTask(IOQController._wait_trigger, self)
             task.install_task(_time() + self.wait_time)
