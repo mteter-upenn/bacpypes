@@ -347,7 +347,8 @@ class Application(ApplicationServiceElement, Collector):
         super(Application, self).request(apdu, forwarded=forwarded)
 
     def indication(self, apdu, forwarded=False):
-        if _debug: Application._debug("indication %r %r", apdu, forwarded)
+        if not apdu.__class__.__name__.startswith('WhoIs'):
+            if _debug: Application._debug("indication %r %r", apdu, forwarded)
 
         # get a helper function
         helperName = "do_" + apdu.__class__.__name__
