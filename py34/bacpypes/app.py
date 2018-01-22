@@ -178,6 +178,7 @@ class DeviceInfoCache:
         has finished with the device information."""
         if _debug: DeviceInfoCache._debug("release_device_info %r", info)
 
+        if _debug: DeviceInfoCache._debug("    - self.cache: %r", self.cache)
         cache_id, cache_address = info._cache_keys
         if cache_id is not None:
             try:
