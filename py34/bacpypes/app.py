@@ -5,6 +5,7 @@ Application Module
 """
 
 import warnings
+from pdb import set_trace as bp
 
 from .debugging import bacpypes_debugging, DebugContents, ModuleLogger
 from .comm import ApplicationServiceElement, bind
@@ -179,10 +180,21 @@ class DeviceInfoCache:
 
         cache_id, cache_address = info._cache_keys
         if cache_id is not None:
-            del self.cache[cache_id]
+            try:
+                del self.cache[cache_id]
+            except KeyError:
+                print('cache_id KeyError,', cache_id, cache_address)
+                for keys, vals in self.cache.items():
+                    print(keys, vals)
+                    # bp()
         if cache_address is not None:
-            del self.cache[cache_address]
-
+            try:
+                del self.cache[cache_address]
+            except KeyError:
+                print('cache_address KeyError,', cache_address, cache_id)
+                for keys, vals in self.cache.items():
+                    print(keys, vals)
+                # bp()
 #
 #   Application
 #
