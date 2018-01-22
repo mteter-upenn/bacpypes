@@ -151,12 +151,20 @@ class DeviceInfoCache:
         if _debug: DeviceInfoCache._debug("update_device_info %r", info)
 
         cache_id, cache_address = info._cache_keys
+        if _debug: DeviceInfoCache._debug("    - self.cache: %r", self.cache)
 
         if (cache_id is not None) and (info.deviceIdentifier != cache_id):
             if _debug: DeviceInfoCache._debug("    - device identifier updated")
 
+
             # remove the old reference, add the new one
-            del self.cache[cache_id]
+            try:
+                del self.cache[cache_id]
+            except KeyError:
+                print('cache_id KeyError,', cache_id, cache_address)
+                for keys, vals in self.cache.items():
+                    print(keys, vals)
+                # bp()
             self.cache[info.deviceIdentifier] = info
 
             cache_id = info.deviceIdentifier
@@ -165,7 +173,13 @@ class DeviceInfoCache:
             if _debug: DeviceInfoCache._debug("    - device address updated")
 
             # remove the old reference, add the new one
-            del self.cache[cache_address]
+            try:
+                del self.cache[cache_address]
+            except KeyError:
+                print('cache_address KeyError,', cache_address, cache_id)
+                for keys, vals in self.cache.items():
+                    print(keys, vals)
+                # bp()
             self.cache[info.address] = info
 
             cache_address = info.address
