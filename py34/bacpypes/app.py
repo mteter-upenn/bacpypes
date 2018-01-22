@@ -186,7 +186,7 @@ class DeviceInfoCache:
                 print('cache_id KeyError,', cache_id, cache_address)
                 for keys, vals in self.cache.items():
                     print(keys, vals)
-                    # bp()
+                bp()
         if cache_address is not None:
             try:
                 del self.cache[cache_address]
@@ -194,7 +194,7 @@ class DeviceInfoCache:
                 print('cache_address KeyError,', cache_address, cache_id)
                 for keys, vals in self.cache.items():
                     print(keys, vals)
-                # bp()
+                bp()
 #
 #   Application
 #
