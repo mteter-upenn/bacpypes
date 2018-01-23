@@ -477,9 +477,9 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
 
         # check for local stations
         # if pdu.pduDestination.addrType == Address.localStationAddr:
-        # if pdu.pduDestination.addrType == Address.localStationAddr and pdu.pduDestination != Address('128.91.135.255'):
+        # if pdu.pduDestination.addrType ==Address.localStationAddr and pdu.pduDestination != Address('128.91.135.255'):
         if pdu.pduDestination.addrType == Address.localStationAddr and not forwarded:
-            print('LOCAL STATION ADDR', pdu.pduDestination)
+            if _debug: BIPForeign._debug("    - unicast npdu to %r", pdu.pduDestination)
             # make an original unicast PDU
             xpdu = OriginalUnicastNPDU(pdu, user_data=pdu.pduUserData)
             xpdu.pduDestination = pdu.pduDestination
@@ -492,7 +492,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
         # elif pdu.pduDestination.addrType == Address.localBroadcastAddr or \
         #                 pdu.pduDestination == Address('128.91.135.255'):
         elif pdu.pduDestination.addrType == Address.localBroadcastAddr or forwarded:
-            print("LOCAL BROADCAST ADDR")
+            if _debug: BIPForeign._debug("    - broadcast to bbmd %r", self.bbmdAddress)
             # make an original broadcast PDU
             xpdu = DistributeBroadcastToNetwork(pdu, user_data=pdu.pduUserData)
             xpdu.pduDestination = self.bbmdAddress
@@ -543,7 +543,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             self.sap_response(pdu, forwarded=forwarded)
 
         elif isinstance(pdu, OriginalUnicastNPDU):
-            print('confirmation originalunicastnpdu')
+            if _debug: BIPForeign._debug("    - unicast npdu from %r to %r", pdu.pduSource, pdu.pduDestination)
             # build a vanilla PDU
             xpdu = PDU(pdu.pduData, source=pdu.pduSource, destination=pdu.pduDestination, user_data=pdu.pduUserData)
 
@@ -551,6 +551,7 @@ class BIPForeign(BIPSAP, Client, Server, OneShotTask, DebugContents):
             self.response(xpdu, forwarded=forwarded)
 
         elif isinstance(pdu, ForwardedNPDU):
+            if _debug: BIPForeign._debug("    - forwarded npdu from %r to LocalBroadcast", pdu.bvlciAddress)
             # build a PDU with the source from the real source
             # if pdu.bvlciAddress == Address('128.91.135.13'):
             #     xpdu = PDU(pdu.pduData, source=Address('128.91.135.255'), destination=LocalBroadcast(),
