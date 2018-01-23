@@ -161,9 +161,9 @@ class DeviceInfoCache:
             try:
                 del self.cache[cache_id]
             except KeyError:
-                print('cache_id KeyError,', cache_id, cache_address)
+                if _debug: DeviceInfoCache._debug('    - cache_id KeyError, %s, %s', cache_id, cache_address)
                 for keys, vals in self.cache.items():
-                    print(keys, vals)
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
                 # bp()
             self.cache[info.deviceIdentifier] = info
 
@@ -176,9 +176,9 @@ class DeviceInfoCache:
             try:
                 del self.cache[cache_address]
             except KeyError:
-                print('cache_address KeyError,', cache_address, cache_id)
+                if _debug: DeviceInfoCache._debug('    - cache_address KeyError, %s, %s', cache_address, cache_id)
                 for keys, vals in self.cache.items():
-                    print(keys, vals)
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
                 # bp()
             self.cache[info.address] = info
 
@@ -198,17 +198,17 @@ class DeviceInfoCache:
             try:
                 del self.cache[cache_id]
             except KeyError:
-                print('cache_id KeyError,', cache_id, cache_address)
+                if _debug: DeviceInfoCache._debug('    - cache_id KeyError, %s, %s', cache_id, cache_address)
                 for keys, vals in self.cache.items():
-                    print(keys, vals)
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
                 # bp()
         if cache_address is not None:
             try:
                 del self.cache[cache_address]
             except KeyError:
-                print('cache_address KeyError,', cache_address, cache_id)
+                if _debug: DeviceInfoCache._debug('    - cache_address KeyError, %s, %s', cache_address, cache_id)
                 for keys, vals in self.cache.items():
-                    print(keys, vals)
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
                 # bp()
 #
 #   Application
