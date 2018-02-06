@@ -58,7 +58,7 @@ class _MultiplexServer(Server):
 @bacpypes_debugging
 class UDPMultiplexer:
 
-    def __init__(self, addr=None, noBroadcast=False):
+    def __init__(self, addr=None, noBroadcast=False, rebootQueue=None):
         if _debug: UDPMultiplexer._debug("__init__ %r noBroadcast=%r", addr, noBroadcast)
 
         # check for some options
@@ -94,7 +94,7 @@ class UDPMultiplexer:
 
         # create and bind the direct address
         self.direct = _MultiplexClient(self)
-        self.directPort = UDPDirector(self.addrTuple)
+        self.directPort = UDPDirector(self.addrTuple, rebootQueue=rebootQueue)
         bind(self.direct, self.directPort)
 
         # create and bind the broadcast address for non-Windows
