@@ -10,6 +10,7 @@ import pickle
 import queue
 
 from time import time as _time
+from time import strftime, localtime
 
 from .debugging import ModuleLogger, bacpypes_debugging
 
@@ -21,6 +22,15 @@ from .comm import ServiceAccessPoint
 # some debugging
 _debug = 0
 _log = ModuleLogger(globals())
+
+
+def _strftime(cur_time=None):
+    if cur_time is None:
+        cur_time = _time()
+    time_dec = str(round(cur_time - int(cur_time), 6))[1:]
+    time_struct = localtime(cur_time)
+    return strftime('%X' + time_dec + ' %x', time_struct)
+
 
 #
 #   UDPActor
@@ -216,7 +226,14 @@ class UDPDirector(asyncore.dispatcher, Server, ServiceAccessPoint):
                 while not self.reboot_queue.empty() and (_time() - clear_q_start < 0.05):
                     self.reboot_queue.get_nowait()
 
-                self.reboot_queue.put_nowait(_time())
+                empty_q_start = _time()
+                try:
+                    self.reboot_queue.put(empty_q_start, timeout=0.05)
+                except queue.Full:
+                    pass
+                else:
+                    if _debug: UDPDirector._debug("        - placed in reboot queue %s, %s", _strftime(empty_q_start),
+                                                  self.reboot_queue.queue)
 
             # send the PDU up to the client
             deferred(self._response, PDU(msg, source=addr))
