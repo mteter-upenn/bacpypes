@@ -4,7 +4,7 @@
 BACnet Virtual Link Layer Service
 """
 
-import inspect
+# import inspect
 import sys
 import struct
 from time import time as _time
