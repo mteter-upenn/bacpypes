@@ -18,7 +18,7 @@ if _sys.platform not in _supported_platforms:
 #   Project Metadata
 #
 
-__version__ = '0.16.2-mt-0.1.0'
+__version__ = '0.16.2-mt-0.1.1'
 __author__ = 'Joel Bender'
 __email__ = 'joel@carrickbender.com'
 
