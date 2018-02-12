@@ -5,6 +5,7 @@ Application Module
 """
 
 import warnings
+from pdb import set_trace as bp
 
 from .debugging import bacpypes_debugging, DebugContents, ModuleLogger
 from .comm import ApplicationServiceElement, bind
@@ -150,12 +151,20 @@ class DeviceInfoCache:
         if _debug: DeviceInfoCache._debug("update_device_info %r", info)
 
         cache_id, cache_address = info._cache_keys
+        if _debug: DeviceInfoCache._debug("    - self.cache: %r", self.cache)
 
         if (cache_id is not None) and (info.deviceIdentifier != cache_id):
             if _debug: DeviceInfoCache._debug("    - device identifier updated")
 
+
             # remove the old reference, add the new one
-            del self.cache[cache_id]
+            try:
+                del self.cache[cache_id]
+            except KeyError:
+                if _debug: DeviceInfoCache._debug('    - cache_id KeyError, %s, %s', cache_id, cache_address)
+                for keys, vals in self.cache.items():
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
+                # bp()
             self.cache[info.deviceIdentifier] = info
 
             cache_id = info.deviceIdentifier
@@ -164,7 +173,13 @@ class DeviceInfoCache:
             if _debug: DeviceInfoCache._debug("    - device address updated")
 
             # remove the old reference, add the new one
-            del self.cache[cache_address]
+            try:
+                del self.cache[cache_address]
+            except KeyError:
+                if _debug: DeviceInfoCache._debug('    - cache_address KeyError, %s, %s', cache_address, cache_id)
+                for keys, vals in self.cache.items():
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
+                # bp()
             self.cache[info.address] = info
 
             cache_address = info.address
@@ -177,12 +192,24 @@ class DeviceInfoCache:
         has finished with the device information."""
         if _debug: DeviceInfoCache._debug("release_device_info %r", info)
 
+        if _debug: DeviceInfoCache._debug("    - self.cache: %r", self.cache)
         cache_id, cache_address = info._cache_keys
         if cache_id is not None:
-            del self.cache[cache_id]
+            try:
+                del self.cache[cache_id]
+            except KeyError:
+                if _debug: DeviceInfoCache._debug('    - cache_id KeyError, %s, %s', cache_id, cache_address)
+                for keys, vals in self.cache.items():
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
+                # bp()
         if cache_address is not None:
-            del self.cache[cache_address]
-
+            try:
+                del self.cache[cache_address]
+            except KeyError:
+                if _debug: DeviceInfoCache._debug('    - cache_address KeyError, %s, %s', cache_address, cache_id)
+                for keys, vals in self.cache.items():
+                    if _debug: DeviceInfoCache._debug('        - keys %s, vals %s', keys, vals)
+                # bp()
 #
 #   Application
 #
@@ -347,7 +374,8 @@ class Application(ApplicationServiceElement, Collector):
         super(Application, self).request(apdu, forwarded=forwarded)
 
     def indication(self, apdu, forwarded=False):
-        if _debug: Application._debug("indication %r %r", apdu, forwarded)
+        if not apdu.__class__.__name__.startswith('WhoIs'):
+            if _debug: Application._debug("indication %r %r", apdu, forwarded)
 
         # get a helper function
         helperName = "do_" + apdu.__class__.__name__
@@ -406,14 +434,15 @@ class ApplicationIOController(IOController, Application):
         # get the destination address from the pdu
         destination_address = iocb.args[0].pduDestination
         if _debug: ApplicationIOController._debug("    - destination_address: %r", destination_address)
-
+        if _debug: ApplicationIOController._debug("    - queue dict start: %r", self.queue_by_address)
         # look up the queue
         queue = self.queue_by_address.get(destination_address, None)
         if not queue:
             queue = SieveQueue(self.request, destination_address)
             self.queue_by_address[destination_address] = queue
         if _debug: ApplicationIOController._debug("    - queue: %r", queue)
-
+        if _debug: ApplicationIOController._debug("    - queue dict: %r", self.queue_by_address)
+        # queue.wait_time = 0.5  # WILL THIS HELP WHEN ADDING TASKS?
         # ask the queue to process the request
         queue.request_io(iocb)
 

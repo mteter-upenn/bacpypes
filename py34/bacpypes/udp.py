@@ -10,6 +10,7 @@ import pickle
 import queue
 
 from time import time as _time
+from time import strftime, localtime
 
 from .debugging import ModuleLogger, bacpypes_debugging
 
@@ -21,6 +22,15 @@ from .comm import ServiceAccessPoint
 # some debugging
 _debug = 0
 _log = ModuleLogger(globals())
+
+
+def _strftime(cur_time=None):
+    if cur_time is None:
+        cur_time = _time()
+    time_dec = str(round(cur_time - int(cur_time), 6))[1:]
+    time_struct = localtime(cur_time)
+    return strftime('%X' + time_dec + ' %x', time_struct)
+
 
 #
 #   UDPActor
@@ -125,7 +135,7 @@ class UDPPickleActor(UDPActor):
 @bacpypes_debugging
 class UDPDirector(asyncore.dispatcher, Server, ServiceAccessPoint):
 
-    def __init__(self, address, timeout=0, reuse=False, actorClass=UDPActor, sid=None, sapID=None):
+    def __init__(self, address, timeout=0, reuse=False, actorClass=UDPActor, sid=None, sapID=None, rebootQueue=None):
         if _debug: UDPDirector._debug("__init__ %r timeout=%r reuse=%r actorClass=%r sid=%r sapID=%r", address, timeout, reuse, actorClass, sid, sapID)
         Server.__init__(self, sid)
         ServiceAccessPoint.__init__(self, sapID)
@@ -162,6 +172,10 @@ class UDPDirector(asyncore.dispatcher, Server, ServiceAccessPoint):
 
         # start with an empty peer pool
         self.peers = {}
+
+        self.reboot_queue = None
+        if isinstance(rebootQueue, queue.Queue):
+            self.reboot_queue = rebootQueue
 
     def add_actor(self, actor):
         """Add an actor when a new one is connected."""
@@ -205,6 +219,21 @@ class UDPDirector(asyncore.dispatcher, Server, ServiceAccessPoint):
         try:
             msg, addr = self.socket.recvfrom(65536)
             if _debug: UDPDirector._debug("    - received %d octets from %s", len(msg), addr)
+
+            if self.reboot_queue is not None:
+                clear_q_start = _time()
+                # clear queue here in case no gatherer is created
+                while not self.reboot_queue.empty() and (_time() - clear_q_start < 0.05):
+                    self.reboot_queue.get_nowait()
+
+                empty_q_start = _time()
+                try:
+                    self.reboot_queue.put(empty_q_start, timeout=0.05)
+                except queue.Full:
+                    pass
+                else:
+                    if _debug: UDPDirector._debug("        - placed in reboot queue %s, %s", _strftime(empty_q_start),
+                                                  self.reboot_queue.queue)
 
             # send the PDU up to the client
             deferred(self._response, PDU(msg, source=addr))

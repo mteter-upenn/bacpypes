@@ -5,8 +5,10 @@ IOCB Module
 """
 
 import sys
+# from pdb import set_trace as bp
 import logging
 from time import time as _time
+from time import strftime, localtime
 
 import threading
 from bisect import bisect_left
@@ -49,7 +51,7 @@ _stateNames = {
 
 CTRL_IDLE = 0       # nothing happening
 CTRL_ACTIVE = 1     # working on an iocb
-CTRL_WAITING = 1    # waiting between iocb requests (throttled)
+CTRL_WAITING = 2    # waiting between iocb requests (throttled)
 
 _ctrlStateNames = {
     0: 'IDLE',
@@ -61,7 +63,14 @@ _ctrlStateNames = {
 TimeoutError = RuntimeError("timeout")
 
 # current time formatting (short version)
-_strftime = lambda: "%011.6f" % (_time() % 3600,)
+# _strftime = lambda: "%011.6f" % (_time() % 3600,)
+# _strftime = lambda: strftime('%H:%M:%S %m/%d/%Y')
+def _strftime(cur_time=None):
+    if cur_time is None:
+        cur_time = _time()
+    time_dec = str(round(cur_time - int(cur_time), 6))[1:]
+    time_struct = localtime(cur_time)
+    return strftime('%X' + time_dec + ' %x', time_struct)
 
 #
 #   IOCB - Input Output Control Block
@@ -604,7 +613,7 @@ class IOController(object):
 
     def complete_io(self, iocb, msg):
         """Called by a handler to return data to the client."""
-        if _debug: IOController._debug("complete_io %r %r", iocb, msg)
+        if _debug: IOController._debug("complete_io %s %r %r",iocb.ioState, iocb, msg)
 
         # if it completed, leave it alone
         if iocb.ioState == COMPLETED:
@@ -699,8 +708,11 @@ class IOQController(IOController):
 
         # if we're busy, queue it
         if (self.state != CTRL_IDLE):
-            if _debug: IOQController._debug("    - busy, request queued")
-
+            if _debug: IOQController._debug("    - BUSY %s, request queued ########################################",
+                                            self.state)
+            if self.state == CTRL_ACTIVE:
+                if _debug: IOQController._debug("    - ACTIVE IOCB: %r", self.active_iocb)
+            # bp()
             iocb.ioState = PENDING
             self.ioQueue.put(iocb)
             return
@@ -734,7 +746,7 @@ class IOQController(IOController):
 
         # change our state
         self.state = CTRL_ACTIVE
-        _statelog.debug("%s %s %s" % (_strftime(), self.name, "active"))
+        _statelog.debug("%s %s %s" % (_strftime(), self.name, "SET TO ACTIVE, active_io"))
 
         # keep track of the iocb
         self.active_iocb = iocb
@@ -745,6 +757,8 @@ class IOQController(IOController):
 
         # check to see if it is completing the active one
         if iocb is not self.active_iocb:
+            if _debug: IOQController._debug("NOT THE CURRENT IOCB !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # bp()
             raise RuntimeError("not the current iocb")
 
         # normal completion
@@ -758,7 +772,8 @@ class IOQController(IOController):
             # change our state
             self.state = CTRL_WAITING
             _statelog.debug("%s %s %s" % (_strftime(), self.name, "waiting"))
-
+            if _debug: IOQController._debug("    WAIT_TIME!!!!!!!!!!!!!!!!!!!! %s %s", self.wait_time, self.name)
+            # bp()
             # schedule a call in the future
             task = FunctionTask(IOQController._wait_trigger, self)
             task.install_task(_time() + self.wait_time)
@@ -766,7 +781,7 @@ class IOQController(IOController):
         else:
             # change our state
             self.state = CTRL_IDLE
-            _statelog.debug("%s %s %s" % (_strftime(), self.name, "idle"))
+            _statelog.debug("%s %s %s" % (_strftime(), self.name, "RETURN TO IDLE, complete_io"))
 
             # look for more to do
             deferred(IOQController._trigger, self)
@@ -788,7 +803,7 @@ class IOQController(IOController):
 
         # change our state
         self.state = CTRL_IDLE
-        _statelog.debug("%s %s %s" % (_strftime(), self.name, "idle"))
+        _statelog.debug("%s %s %s" % (_strftime(), self.name, "RETURN TO IDLE, abort_io"))
 
         # look for more to do
         deferred(IOQController._trigger, self)
@@ -804,7 +819,8 @@ class IOQController(IOController):
 
         # if there is nothing to do, return
         if not self.ioQueue.queue:
-            if _debug: IOQController._debug("    - empty queue")
+            if _debug: IOQController._debug("    - empty queue, %s, THE END?????????????????????????????????",
+                                            self.state)
             return
 
         # get the next iocb
@@ -838,7 +854,7 @@ class IOQController(IOController):
 
         # change our state
         self.state = CTRL_IDLE
-        _statelog.debug("%s %s %s" % (_strftime(), self.name, "idle"))
+        _statelog.debug("%s %s %s" % (_strftime(), self.name, "RETURN TO IDLE, _wait_trigger"))
 
         # look for more to do
         IOQController._trigger(self)
@@ -901,6 +917,9 @@ class SieveQueue(IOQController):
 
         # send the request
         self.request_fn(iocb.args[0])
+
+    def __del__(self):
+        if _debug: SieveQueue._debug('__del__ %r', self.address)
 
 #
 #   SieveClientController

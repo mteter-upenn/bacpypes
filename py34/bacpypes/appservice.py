@@ -469,7 +469,7 @@ class ClientSSM(SSM):
             if _debug: ClientSSM._debug("    - error/reject/abort")
 
             self.set_state(COMPLETED)
-            self.response = apdu
+            self.response = apdu  # why is this here?  can't find any .response variable, just method
             self.response(apdu, forwarded=forwarded)
 
         else:
@@ -785,10 +785,10 @@ class ServerSSM(SSM):
 
             # send out the first segment (or the whole thing)
             if self.segmentCount == 1:
-                self.response(apdu)
+                self.response(apdu, forwarded=forwarded)
                 self.set_state(COMPLETED)
             else:
-                self.response(self.get_segment(0))
+                self.response(self.get_segment(0), forwarded=forwarded)
                 self.set_state(SEGMENTED_RESPONSE, self.ssmSAP.segmentTimeout)
 
         else:

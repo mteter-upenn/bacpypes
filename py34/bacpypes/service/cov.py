@@ -4,6 +4,8 @@
 Change Of Value Service
 """
 
+from time import strftime, localtime
+
 from ..debugging import bacpypes_debugging, DebugContents, ModuleLogger
 from ..capability import Capability
 
@@ -24,6 +26,14 @@ from .detect import DetectionAlgorithm, monitor_filter
 # some debugging
 _debug = 0
 _log = ModuleLogger(globals())
+
+# time string
+def _strftime(cur_time=None):
+    if cur_time is None:
+        cur_time = TaskManager().get_time()
+    time_dec = str(round(cur_time - int(cur_time), 6))[1:]
+    time_struct = localtime(cur_time)
+    return strftime('%X' + time_dec + ' %x', time_struct)
 
 #
 #   SubscriptionList
@@ -181,7 +191,8 @@ class COVDetection(DetectionAlgorithm):
 
         # get the current time from the task manager
         current_time = TaskManager().get_time()
-        if _debug: COVDetection._debug("    - current_time: %r", current_time)
+        obj_parent_dev = self.obj._app.localDevice.objectIdentifier
+        if _debug: COVDetection._debug("    - current_time: %s, device: %s", _strftime(current_time), obj_parent_dev)
 
         # create a list of values
         list_of_values = []
@@ -194,7 +205,7 @@ class COVDetection(DetectionAlgorithm):
 
             # build the value
             bundle_value = property_datatype(self.obj._values[property_name])
-            if _debug: COVDetection._debug("        - bundle_value: %r", bundle_value)
+            if _debug: COVDetection._debug("        - bundle_value: %s", bundle_value)
 
             # bundle it into a sequence
             property_value = PropertyValue(
@@ -523,7 +534,8 @@ class ChangeOfValueServices(Capability):
             del self.cov_detections[cov.obj_ref]
 
     def cov_notification(self, cov, request):
-        if _debug: ChangeOfValueServices._debug("cov_notification %s %s", str(cov), str(request))
+        obj_parent_dev = self.localDevice.objectIdentifier
+        if _debug: ChangeOfValueServices._debug("cov_notification %s %s %s", obj_parent_dev, str(cov), str(request))
 
         # create an IOCB with the request
         iocb = IOCB(request)
@@ -557,7 +569,8 @@ class ChangeOfValueServices(Capability):
             self.cov_abort(iocb.cov, iocb.args[0], iocb.ioError)
 
     def cov_ack(self, cov, request, response):
-        if _debug: ChangeOfValueServices._debug("cov_ack %r %r %r", cov, request, response)
+        # if _debug: ChangeOfValueServices._debug("cov_ack %r %s %s", cov, request, response)
+        if _debug: ChangeOfValueServices._debug("cov_ack")  # %s %s", cov, request, response)
 
     def cov_error(self, cov, request, response):
         if _debug: ChangeOfValueServices._debug("cov_error %r %r %r", cov, request, response)
