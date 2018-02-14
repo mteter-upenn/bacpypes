@@ -555,12 +555,13 @@ class IOQueue:
 @bacpypes_debugging
 class IOController(object):
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, local_device_id=None):
         """Initialize a controller."""
         if _debug: IOController._debug("__init__ name=%r", name)
 
         # save the name
         self.name = name
+        self.local_device_id = local_device_id
 
     def abort(self, err):
         """Abort all requests, no default implementation."""
@@ -568,7 +569,7 @@ class IOController(object):
 
     def request_io(self, iocb):
         """Called by a client to start processing a request."""
-        if _debug: IOController._debug("request_io %r", iocb)
+        if _debug: IOController._debug("%r request_io %r", self.local_device_id, iocb)
 
         # check that the parameter is an IOCB
         if not isinstance(iocb, IOCB):
@@ -602,7 +603,7 @@ class IOController(object):
     def active_io(self, iocb):
         """Called by a handler to notify the controller that a request is
         being processed."""
-        if _debug: IOController._debug("active_io %r", iocb)
+        if _debug: IOController._debug("%r active_io %r", self.local_device_id, iocb)
 
         # requests should be idle or pending before coming active
         if (iocb.ioState != IDLE) and (iocb.ioState != PENDING):
@@ -613,7 +614,7 @@ class IOController(object):
 
     def complete_io(self, iocb, msg):
         """Called by a handler to return data to the client."""
-        if _debug: IOController._debug("complete_io %s %r %r",iocb.ioState, iocb, msg)
+        if _debug: IOController._debug("%r complete_io %s %r %r", self.local_device_id, iocb.ioState, iocb, msg)
 
         # if it completed, leave it alone
         if iocb.ioState == COMPLETED:
@@ -633,7 +634,7 @@ class IOController(object):
 
     def abort_io(self, iocb, err):
         """Called by a handler or a client to abort a transaction."""
-        if _debug: IOController._debug("abort_io %r %r", iocb, err)
+        if _debug: IOController._debug("%r abort_io %r %r", self.local_device_id, iocb, err)
 
         # if it completed, leave it alone
         if iocb.ioState == COMPLETED:
@@ -660,10 +661,10 @@ class IOQController(IOController):
 
     wait_time = 0.0
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, local_device_id=None):
         """Initialize a queue controller."""
         if _debug: IOQController._debug("__init__ name=%r", name)
-        IOController.__init__(self, name)
+        IOController.__init__(self, name, local_device_id=local_device_id)
 
         # start idle
         self.state = CTRL_IDLE
@@ -677,7 +678,7 @@ class IOQController(IOController):
 
     def abort(self, err):
         """Abort all pending requests."""
-        if _debug: IOQController._debug("abort %r", err)
+        if _debug: IOQController._debug("%r abort %r", self.local_device_id, err)
 
         if (self.state == CTRL_IDLE):
             if _debug: IOQController._debug("    - idle")
@@ -701,7 +702,7 @@ class IOQController(IOController):
 
     def request_io(self, iocb):
         """Called by a client to start processing a request."""
-        if _debug: IOQController._debug("request_io %r", iocb)
+        if _debug: IOQController._debug("%r request_io %r", self.local_device_id, iocb)
 
         # bind the iocb to this controller
         iocb.ioController = self
@@ -739,7 +740,7 @@ class IOQController(IOController):
     def active_io(self, iocb):
         """Called by a handler to notify the controller that a request is
         being processed."""
-        if _debug: IOQController._debug("active_io %r", iocb)
+        if _debug: IOQController._debug("%r active_io %r", self.local_device_id, iocb)
 
         # base class work first, setting iocb state and timer data
         IOController.active_io(self, iocb)
@@ -753,7 +754,7 @@ class IOQController(IOController):
 
     def complete_io(self, iocb, msg):
         """Called by a handler to return data to the client."""
-        if _debug: IOQController._debug("complete_io %r %r", iocb, msg)
+        if _debug: IOQController._debug("%r complete_io %r %r", self.local_device_id, iocb, msg)
 
         # check to see if it is completing the active one
         if iocb is not self.active_iocb:
@@ -788,7 +789,7 @@ class IOQController(IOController):
 
     def abort_io(self, iocb, err):
         """Called by a handler or a client to abort a transaction."""
-        if _debug: IOQController._debug("abort_io %r %r", iocb, err)
+        if _debug: IOQController._debug("%r abort_io %r %r", self.local_device_id, iocb, err)
 
         # normal abort
         IOController.abort_io(self, iocb, err)
@@ -810,7 +811,7 @@ class IOQController(IOController):
 
     def _trigger(self):
         """Called to launch the next request in the queue."""
-        if _debug: IOQController._debug("_trigger")
+        if _debug: IOQController._debug("%r _trigger", self.local_device_id)
 
         # if we are busy, do nothing
         if self.state != CTRL_IDLE:
@@ -846,7 +847,7 @@ class IOQController(IOController):
 
     def _wait_trigger(self):
         """Called to launch the next request in the queue."""
-        if _debug: IOQController._debug("_wait_trigger")
+        if _debug: IOQController._debug("%r _wait_trigger", self.local_device_id)
 
         # make sure we are waiting
         if (self.state != CTRL_WAITING):
@@ -901,16 +902,17 @@ class ClientController(Client, IOQController):
 @bacpypes_debugging
 class SieveQueue(IOQController):
 
-    def __init__(self, request_fn, address=None):
+    def __init__(self, request_fn, address=None, local_device_id=None):
         if _debug: SieveQueue._debug("__init__ %r %r", request_fn, address)
         IOQController.__init__(self, str(address))
 
         # save a reference to the request function
         self.request_fn = request_fn
         self.address = address
+        self.local_device_id = local_device_id
 
     def process_io(self, iocb):
-        if _debug: SieveQueue._debug("process_io %r", iocb)
+        if _debug: SieveQueue._debug("%r process_io %r", self.local_device_id, iocb)
 
         # this is now an active request
         self.active_io(iocb)
@@ -919,7 +921,7 @@ class SieveQueue(IOQController):
         self.request_fn(iocb.args[0])
 
     def __del__(self):
-        if _debug: SieveQueue._debug('__del__ %r', self.address)
+        if _debug: SieveQueue._debug('%r __del__ %r', self.local_device_id, self.address)
 
 #
 #   SieveClientController

@@ -224,6 +224,7 @@ class Application(ApplicationServiceElement, Collector):
         # local objects by ID and name
         self.objectName = {}
         self.objectIdentifier = {}
+        self.singleObjId = None
 
         # keep track of the local device
         if localDevice:
@@ -235,6 +236,7 @@ class Application(ApplicationServiceElement, Collector):
             # local objects by ID and name
             self.objectName[localDevice.objectName] = localDevice
             self.objectIdentifier[localDevice.objectIdentifier] = localDevice
+            self.local_device_id = localDevice.objectIdentifier
 
         # local address deprecated, but continue to use the old initializer
         if localAddress is not None:
@@ -364,7 +366,7 @@ class Application(ApplicationServiceElement, Collector):
     #-----
 
     def request(self, apdu, forwarded=False):
-        if _debug: Application._debug("request %r", apdu)
+        if _debug: Application._debug("request %r, %r", self.local_device_id, apdu)
 
         # double check the input is the right kind of APDU
         if not isinstance(apdu, (UnconfirmedRequestPDU, ConfirmedRequestPDU)):
@@ -375,12 +377,12 @@ class Application(ApplicationServiceElement, Collector):
 
     def indication(self, apdu, forwarded=False):
         if not apdu.__class__.__name__.startswith('WhoIs'):
-            if _debug: Application._debug("indication %r %r", apdu, forwarded)
+            if _debug: Application._debug("indication %r %r %r", self.local_device_id, apdu, forwarded)
 
         # get a helper function
         helperName = "do_" + apdu.__class__.__name__
         helperFn = getattr(self, helperName, None)
-        if _debug: Application._debug("    - helperFn: %r", helperFn)
+        if _debug: Application._debug("    - %r helperFn: %r", self.local_device_id, helperFn)
 
         # send back a reject for unrecognized services
         if not helperFn:
@@ -429,7 +431,7 @@ class ApplicationIOController(IOController, Application):
         self.queue_by_address = {}
 
     def process_io(self, iocb):
-        if _debug: ApplicationIOController._debug("process_io %r", iocb)
+        if _debug: ApplicationIOController._debug("%r process_io %r", self.local_device_id, iocb)
 
         # get the destination address from the pdu
         destination_address = iocb.args[0].pduDestination
@@ -438,7 +440,7 @@ class ApplicationIOController(IOController, Application):
         # look up the queue
         queue = self.queue_by_address.get(destination_address, None)
         if not queue:
-            queue = SieveQueue(self.request, destination_address)
+            queue = SieveQueue(self.request, destination_address, self.local_device_id)
             self.queue_by_address[destination_address] = queue
         if _debug: ApplicationIOController._debug("    - queue: %r", queue)
         if _debug: ApplicationIOController._debug("    - queue dict: %r", self.queue_by_address)
@@ -447,7 +449,7 @@ class ApplicationIOController(IOController, Application):
         queue.request_io(iocb)
 
     def _app_complete(self, address, apdu):
-        if _debug: ApplicationIOController._debug("_app_complete %r %r", address, apdu)
+        if _debug: ApplicationIOController._debug("%r _app_complete %r %r", self.local_device_id, address, apdu)
 
         # look up the queue
         queue = self.queue_by_address.get(address, None)
@@ -476,7 +478,7 @@ class ApplicationIOController(IOController, Application):
             del self.queue_by_address[address]
 
     def request(self, apdu, forwarded=False):
-        if _debug: ApplicationIOController._debug("request %r", apdu)
+        if _debug: ApplicationIOController._debug("%r request %r", self.local_device_id, apdu)
 
         # send it downstream
         super(ApplicationIOController, self).request(apdu, forwarded=forwarded)
@@ -486,7 +488,7 @@ class ApplicationIOController(IOController, Application):
             self._app_complete(apdu.pduDestination, None)
 
     def confirmation(self, apdu, forwarded=False):
-        if _debug: ApplicationIOController._debug("confirmation %r", apdu)
+        if _debug: ApplicationIOController._debug("%r confirmation %r", self.local_device_id, apdu)
 
         # this is an ack, error, reject or abort
         self._app_complete(apdu.pduSource, apdu)
