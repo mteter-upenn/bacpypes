@@ -287,6 +287,8 @@ class COVIncrementCriteria(COVDetection):
 
         # previous reported value
         self.previous_reported_value = None
+        self.time_of_last_notification = TaskManager().get_time()
+        self.time_diff = 1800000
 
     @monitor_filter('presentValue')
     def present_value_filter(self, old_value, new_value):
@@ -300,6 +302,14 @@ class COVIncrementCriteria(COVDetection):
         # see if it changed enough to trigger reporting
         value_changed = (new_value <= (self.previous_reported_value - self.covIncrement)) \
             or (new_value >= (self.previous_reported_value + self.covIncrement))
+
+        if not value_changed:
+            if TaskManager().get_time() - self.time_of_last_notification > self.time_diff:
+                self.time_of_last_notification = TaskManager().get_time()
+                value_changed = True
+        else:
+            self.time_of_last_notification = TaskManager().get_time()
+            
         if _debug: COVIncrementCriteria._debug("    - value significantly changed: %r", value_changed)
 
         return value_changed
