@@ -303,9 +303,11 @@ class COVIncrementCriteria(COVDetection):
         value_changed = (new_value <= (self.previous_reported_value - self.covIncrement)) \
             or (new_value >= (self.previous_reported_value + self.covIncrement))
 
+        # if the value hasn't changed, then send out notification anyways if enough time has passed
         if not value_changed:
-            if TaskManager().get_time() - self.time_of_last_notification > self.time_diff:
-                self.time_of_last_notification = TaskManager().get_time()
+            current_time = TaskManager().get_time()
+            if current_time - self.time_of_last_notification > self.time_diff:
+                self.time_of_last_notification = current_time
                 value_changed = True
         else:
             self.time_of_last_notification = TaskManager().get_time()
